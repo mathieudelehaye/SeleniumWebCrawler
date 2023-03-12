@@ -19,6 +19,7 @@
 import org.junit.jupiter.api.Test;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.*;
+import java.util.List;
 
 public class WebDriverTest {
     @Test
@@ -27,20 +28,17 @@ public class WebDriverTest {
         final int pauseTimeInSec = 3;
 
         // Optional. If not specified, WebDriverTest searches the PATH for chromedriver.
-        System.setProperty("webdriver.chrome.driver", "/path/to/chromedriver");
+        System.setProperty("webdriver.chrome.driver",
+            "/Volumes/portable-ssd/Web_Development/_J/chromedriver_mac64/chromedriver");
 
-        final String searchPageUrl = "http://www.google.com/";
-
-        final String searchBoxElementName = "q";
-
-        final String searchCriteria = "New-York city";
+        final String searchPageUrl = "https://britishbeautycouncil.com/recycling-points/";
+        final String searchBoxElementName = "wpsl-search-input";
+        final String searchButtonElementId = "wpsl-search-btn";
+        final String searchCriteria = "Manchester";
+        final String resultListDivElementId = "wpsl-stores";
 
         WebDriver driver = new ChromeDriver();
         driver.get(searchPageUrl);
-
-        // Approve the consent
-        WebElement consent = driver.findElement(By.xpath("//*[@id=\"L2AGLb\"]/div"));
-        consent.click();
 
         // Fill in the search box
         WebElement searchBox = driver.findElement(By.name(searchBoxElementName));
@@ -48,8 +46,24 @@ public class WebDriverTest {
         Thread.sleep(pauseTimeInSec * 1000);
 
         // Submit the search
-        searchBox.submit();
+        WebElement searchButton = driver.findElement(By.id(searchButtonElementId));
+        searchButton.click();
         Thread.sleep(pauseTimeInSec * 1000);
+
+        // Get the results
+        WebElement resulListDiv = driver.findElement(By.id(resultListDivElementId));
+
+        WebElement resultListHead = resulListDiv.findElements(By.xpath("./child::*")).get(0);
+
+        List<WebElement> resultListItems = resultListHead.findElements(By.xpath("./child::*"));
+        final int resultCount =  resultListItems.size();
+        System.out.println(resultCount);
+
+        for (WebElement result: resultListItems) {
+            final String resultId = result.getAttribute("data-store-id");
+            System.out.println(resultId);
+        }
+
 
         driver.quit();
     }
