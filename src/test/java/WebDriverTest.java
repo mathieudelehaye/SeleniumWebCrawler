@@ -27,8 +27,7 @@ public class WebDriverTest {
         final int pauseTimeInSec = 3;
 
         // Optional. If not specified, WebDriverTest searches the PATH for chromedriver.
-        System.setProperty("webdriver.chrome.driver",
-            "/Volumes/portable-ssd/Web_Development/_J/chromedriver_mac64/chromedriver");
+        System.setProperty("webdriver.chrome.driver", "/path/to/chromedriver");
 
         final String searchPageUrl = "http://www.google.com/";
 
