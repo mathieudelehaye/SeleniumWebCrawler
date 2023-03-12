@@ -24,24 +24,33 @@ public class WebDriverTest {
     @Test
     public void testGoogleSearch() throws InterruptedException {
 
+        final int pauseTimeInSec = 3;
+
         // Optional. If not specified, WebDriverTest searches the PATH for chromedriver.
         System.setProperty("webdriver.chrome.driver",
             "/Volumes/portable-ssd/Web_Development/_J/chromedriver_mac64/chromedriver");
 
+        final String searchPageUrl = "http://www.google.com/";
+
+        final String searchBoxElementName = "q";
+
+        final String searchCriteria = "New-York city";
+
         WebDriver driver = new ChromeDriver();
+        driver.get(searchPageUrl);
 
-        driver.get("http://www.google.com/");
-
-        // Approve consent
+        // Approve the consent
         WebElement consent = driver.findElement(By.xpath("//*[@id=\"L2AGLb\"]/div"));
         consent.click();
 
-        Thread.sleep(5000);  // Let the user actually see something!
-        WebElement searchBox = driver.findElement(By.name("q"));
-        searchBox.sendKeys("ChromeDriver");
-        searchBox.submit();
+        // Fill in the search box
+        WebElement searchBox = driver.findElement(By.name(searchBoxElementName));
+        searchBox.sendKeys(searchCriteria);
+        Thread.sleep(pauseTimeInSec * 1000);
 
-        Thread.sleep(5000);  // Let the user actually see something!
+        // Submit the search
+        searchBox.submit();
+        Thread.sleep(pauseTimeInSec * 1000);
 
         driver.quit();
     }
