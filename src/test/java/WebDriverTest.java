@@ -59,11 +59,37 @@ public class WebDriverTest {
         final int resultCount =  resultListItems.size();
         System.out.println(resultCount);
 
-        for (WebElement result: resultListItems) {
-            final String resultId = result.getAttribute("data-store-id");
-            System.out.println(resultId);
-        }
+        for (final WebElement listItem: resultListItems) {
+            System.out.println("");
 
+            final String resultId = listItem.getAttribute("data-store-id");
+            System.out.println("id = " + resultId);
+
+            final WebElement itemDiv = listItem.findElements(By.className("wpsl-store-location")).get(0);
+            final WebElement divParagraph = itemDiv.findElements(By.xpath("./child::*")).get(0);
+
+            final List<WebElement> itemLines = divParagraph.findElements(By.xpath("./child::*"));
+            final int itemLineCount = itemLines.size();
+            System.out.println("itemLineCount = " + itemLineCount);
+
+            final String itemName = itemLines.get(0).getText();
+            System.out.println("itemName = " + itemName);
+
+            final List<WebElement> itemAddressLines = divParagraph.findElements(By.className("wpsl-street"));
+            final int addressLineCount = itemAddressLines.size();
+            System.out.println("addressLineCount = " + addressLineCount);
+
+            for (final WebElement addressLinElement: itemAddressLines) {
+                final String addressLine = addressLinElement.getText();
+                System.out.println("addressLine = " + addressLine);
+            }
+
+            final List<WebElement> itemCityLines = itemLines.subList(1 + addressLineCount, itemLineCount);
+            for (final WebElement itemCityLineElement: itemCityLines) {
+                final String itemCityLine = itemCityLineElement.getText();
+                System.out.println("itemCityLine = " + itemCityLine);
+            }
+        }
 
         driver.quit();
     }
