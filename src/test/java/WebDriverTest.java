@@ -19,6 +19,8 @@
 import org.junit.jupiter.api.Test;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.*;
+import org.openqa.selenium.webcrawler.model.SearchResult;
+import java.util.ArrayList;
 import java.util.List;
 
 public class WebDriverTest {
@@ -60,11 +62,14 @@ public class WebDriverTest {
         System.out.println(resultCount);
 
         for (final WebElement listItem: resultListItems) {
+            var result = new SearchResult();
             System.out.println("");
 
-            final String resultId = listItem.getAttribute("data-store-id");
-            System.out.println("id = " + resultId);
+            // Id
+            result.setId(Integer.valueOf(listItem.getAttribute("data-store-id")));
+            System.out.println("id = " + result.getId());
 
+            // Name
             final WebElement itemDiv = listItem.findElements(By.className("wpsl-store-location")).get(0);
             final WebElement divParagraph = itemDiv.findElements(By.xpath("./child::*")).get(0);
 
@@ -72,22 +77,33 @@ public class WebDriverTest {
             final int itemLineCount = itemLines.size();
             System.out.println("itemLineCount = " + itemLineCount);
 
-            final String itemName = itemLines.get(0).getText();
-            System.out.println("itemName = " + itemName);
+            result.setName(itemLines.get(0).getText());
+            System.out.println("name = " + result.getName());
 
+            // Address
             final List<WebElement> itemAddressLines = divParagraph.findElements(By.className("wpsl-street"));
             final int addressLineCount = itemAddressLines.size();
             System.out.println("addressLineCount = " + addressLineCount);
 
+            final ArrayList<String> addressLines = new ArrayList<>();
             for (final WebElement addressLinElement: itemAddressLines) {
-                final String addressLine = addressLinElement.getText();
-                System.out.println("addressLine = " + addressLine);
+                addressLines.add(addressLinElement.getText());
+            }
+            result.setAddressLines(addressLines.toArray(new String[0]));
+            for (final String addressLine: result.getAddressLines()) {
+                System.out.println("address line = " + addressLine);
             }
 
+            // City
             final List<WebElement> itemCityLines = itemLines.subList(1 + addressLineCount, itemLineCount);
+
+            final ArrayList<String> cityLines = new ArrayList<>();
             for (final WebElement itemCityLineElement: itemCityLines) {
-                final String itemCityLine = itemCityLineElement.getText();
-                System.out.println("itemCityLine = " + itemCityLine);
+                cityLines.add(itemCityLineElement.getText());
+            }
+            result.setCityLines(cityLines.toArray(new String[0]));
+            for (final String cityLine: result.getCityLines()) {
+                System.out.println("city line = " + cityLine);
             }
         }
 
