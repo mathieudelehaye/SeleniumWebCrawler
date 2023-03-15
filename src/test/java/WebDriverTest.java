@@ -19,13 +19,16 @@
 import org.junit.jupiter.api.Test;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.*;
+import org.openqa.selenium.webcrawler.model.CrawledRPInfosDBEntry;
 import org.openqa.selenium.webcrawler.model.SearchResult;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class WebDriverTest {
     @Test
-    public void testGoogleSearch() throws InterruptedException {
+    public void testGoogleSearch() throws InterruptedException, IOException {
 
         final int pauseTimeInSec = 3;
 
@@ -38,6 +41,9 @@ public class WebDriverTest {
         final String searchButtonElementId = "wpsl-search-btn";
         final String searchCriteria = "Manchester";
         final String resultListDivElementId = "wpsl-stores";
+        final String resultIdAttribute = "data-store-id";
+        final String resultDivClass = "wpsl-store-location";
+        final String resultAddressSpanClass = "wpsl-street";
 
         WebDriver driver = new ChromeDriver();
         driver.get(searchPageUrl);
@@ -66,11 +72,11 @@ public class WebDriverTest {
             System.out.println("");
 
             // Id
-            result.setId(Integer.valueOf(listItem.getAttribute("data-store-id")));
+            result.setId(Integer.valueOf(listItem.getAttribute(resultIdAttribute)));
             System.out.println("id = " + result.getId());
 
             // Name
-            final WebElement itemDiv = listItem.findElements(By.className("wpsl-store-location")).get(0);
+            final WebElement itemDiv = listItem.findElements(By.className(resultDivClass)).get(0);
             final WebElement divParagraph = itemDiv.findElements(By.xpath("./child::*")).get(0);
 
             final List<WebElement> itemLines = divParagraph.findElements(By.xpath("./child::*"));
@@ -81,7 +87,7 @@ public class WebDriverTest {
             System.out.println("name = " + result.getName());
 
             // Address
-            final List<WebElement> itemAddressLines = divParagraph.findElements(By.className("wpsl-street"));
+            final List<WebElement> itemAddressLines = divParagraph.findElements(By.className(resultAddressSpanClass));
             final int addressLineCount = itemAddressLines.size();
             System.out.println("addressLineCount = " + addressLineCount);
 
@@ -105,6 +111,9 @@ public class WebDriverTest {
             for (final String cityLine: result.getCityLines()) {
                 System.out.println("city line = " + cityLine);
             }
+
+            // Write data to the DB
+            (new CrawledRPInfosDBEntry(String.valueOf(result.getId()), result)).createFields();
         }
 
         driver.quit();
