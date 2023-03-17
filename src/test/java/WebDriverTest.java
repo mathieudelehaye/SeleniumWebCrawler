@@ -3,18 +3,21 @@
 //
 //  Created by Mathieu Delehaye on 12/03/2023.
 //
-//  BeautyAndroid: An Android app to order and recycle cosmetics.
+//  SeleniumWebCrawler: An app to automatically use search engines and store the results to a database.
 //
 //  Copyright © 2023 Mathieu Delehaye. All rights reserved.
 //
 //
-//  This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by
-//  the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+//  This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General
+//  Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option)
+//  any later version.
 //
-//  This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-//  FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
+//  This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+//  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public
+//  License for more details.
 //
-//  You should have received a copy of the GNU Affero General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
+//  You should have received a copy of the GNU Affero General Public License along with this program. If not, see
+//  <https://www.gnu.org/licenses/>.
 
 import org.junit.jupiter.api.Test;
 import org.openqa.selenium.*;
@@ -23,7 +26,6 @@ import org.openqa.selenium.webcrawler.model.CrawledRPInfosDBEntry;
 import org.openqa.selenium.webcrawler.model.SearchResult;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 public class WebDriverTest {
@@ -114,6 +116,8 @@ public class WebDriverTest {
 
             // Write data to the DB
             (new CrawledRPInfosDBEntry(String.valueOf(result.getId()), result)).createFields();
+
+            //break;
         }
 
         driver.quit();
