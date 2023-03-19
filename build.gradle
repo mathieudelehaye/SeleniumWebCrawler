@@ -10,14 +10,16 @@ repositories {
 }
 
 dependencies {
+    implementation 'com.googlecode.json-simple:json-simple:1.1'
+
+    implementation platform('com.google.cloud:libraries-bom:26.10.0')
+    implementation 'com.google.cloud:google-cloud-firestore'
+
     implementation 'org.seleniumhq.selenium:selenium-api:3.14.0'
     implementation 'org.seleniumhq.selenium:selenium-chrome-driver:2.43.0'
     implementation 'org.seleniumhq.selenium:selenium-java:2.53.1'
     implementation 'org.seleniumhq.selenium:selenium-remote-driver:2.53.1'
     implementation 'org.seleniumhq.selenium:selenium-server:4.0.0-alpha-2'
-
-    implementation platform('com.google.cloud:libraries-bom:26.10.0')
-    implementation 'com.google.cloud:google-cloud-firestore'
 
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'

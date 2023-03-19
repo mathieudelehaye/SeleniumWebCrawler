@@ -22,15 +22,13 @@
 import org.junit.jupiter.api.Test;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.*;
-import org.openqa.selenium.webcrawler.model.CrawledRPInfosDBEntry;
-import org.openqa.selenium.webcrawler.model.SearchResult;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import org.openqa.selenium.webcrawler.model.JSONResultStructParser;
+import org.openqa.selenium.webcrawler.model.ResultParser;
+import java.io.FileReader;
 
 public class WebDriverTest {
     @Test
-    public void testGoogleSearch() throws InterruptedException, IOException {
+    public void testRPSearch() throws InterruptedException {
 
         final int pauseTimeInSec = 3;
 
@@ -42,10 +40,6 @@ public class WebDriverTest {
         final String searchBoxElementName = "wpsl-search-input";
         final String searchButtonElementId = "wpsl-search-btn";
         final String searchCriteria = "Manchester";
-        final String resultListDivElementId = "wpsl-stores";
-        final String resultIdAttribute = "data-store-id";
-        final String resultDivClass = "wpsl-store-location";
-        final String resultAddressSpanClass = "wpsl-street";
 
         WebDriver driver = new ChromeDriver();
         driver.get(searchPageUrl);
@@ -61,63 +55,16 @@ public class WebDriverTest {
         Thread.sleep(pauseTimeInSec * 1000);
 
         // Get the results
-        WebElement resulListDiv = driver.findElement(By.id(resultListDivElementId));
+        final String structFilePath = "json/recycling_points_results.json";
+        try (FileReader reader = new FileReader(ClassLoader.getSystemResource(structFilePath).getFile())) {
+            // parse the result, using the json file containing its structure
 
-        WebElement resultListHead = resulListDiv.findElements(By.xpath("./child::*")).get(0);
+            JSONResultStructParser jsonParser = new JSONResultStructParser();
+            jsonParser.parse(reader);
 
-        List<WebElement> resultListItems = resultListHead.findElements(By.xpath("./child::*"));
-        final int resultCount =  resultListItems.size();
-        System.out.println(resultCount);
-
-        for (final WebElement listItem: resultListItems) {
-            var result = new SearchResult();
-            System.out.println("");
-
-            // Id
-            result.setId(Integer.valueOf(listItem.getAttribute(resultIdAttribute)));
-            System.out.println("id = " + result.getId());
-
-            // Name
-            final WebElement itemDiv = listItem.findElements(By.className(resultDivClass)).get(0);
-            final WebElement divParagraph = itemDiv.findElements(By.xpath("./child::*")).get(0);
-
-            final List<WebElement> itemLines = divParagraph.findElements(By.xpath("./child::*"));
-            final int itemLineCount = itemLines.size();
-            System.out.println("itemLineCount = " + itemLineCount);
-
-            result.setName(itemLines.get(0).getText());
-            System.out.println("name = " + result.getName());
-
-            // Address
-            final List<WebElement> itemAddressLines = divParagraph.findElements(By.className(resultAddressSpanClass));
-            final int addressLineCount = itemAddressLines.size();
-            System.out.println("addressLineCount = " + addressLineCount);
-
-            final ArrayList<String> addressLines = new ArrayList<>();
-            for (final WebElement addressLinElement: itemAddressLines) {
-                addressLines.add(addressLinElement.getText());
-            }
-            result.setAddressLines(addressLines.toArray(new String[0]));
-            for (final String addressLine: result.getAddressLines()) {
-                System.out.println("address line = " + addressLine);
-            }
-
-            // City
-            final List<WebElement> itemCityLines = itemLines.subList(1 + addressLineCount, itemLineCount);
-
-            final ArrayList<String> cityLines = new ArrayList<>();
-            for (final WebElement itemCityLineElement: itemCityLines) {
-                cityLines.add(itemCityLineElement.getText());
-            }
-            result.setCityLines(cityLines.toArray(new String[0]));
-            for (final String cityLine: result.getCityLines()) {
-                System.out.println("city line = " + cityLine);
-            }
-
-            // Write data to the DB
-            (new CrawledRPInfosDBEntry(String.valueOf(result.getId()), result)).createFields();
-
-            //break;
+            new ResultParser(driver, jsonParser);
+        } catch (Exception ex) {
+            ex.printStackTrace();
         }
 
         driver.quit();

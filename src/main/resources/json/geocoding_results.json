@@ -1,0 +1,37 @@
+{
+  "tag": "div",
+  "attributes": [
+    {
+      "key": "id",
+      "value": "details-result-0"
+    }
+  ],
+  "children": [
+    {
+      "tag": "p",
+      "attributes": [
+        {
+          "key": "class",
+          "value": "result-viewport"
+        }
+      ],
+      "children": [
+        {
+          "tag": "strong",
+          "value": "Viewport:"
+        }
+      ],
+      "value": {
+        "regex": " (-?[0-9]+\\.[0-9]+),(-?[0-9]+\\.[0-9]+) – -?[0-9]+.[0-9]+,-?[0-9]+.[0-9]+",
+        "variables": [
+          {
+            "name": "latitude"
+          },
+          {
+            "name": "longitude"
+          }
+        ]
+      }
+    }
+  ]
+}
