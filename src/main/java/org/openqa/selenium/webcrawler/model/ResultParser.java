@@ -25,7 +25,9 @@ import org.json.simple.parser.ParseException;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.webcrawler.MyLogger;
 import java.util.*;
+import java.util.logging.Level;
 
 public class ResultParser {
     private WebDriver mDriver;
@@ -44,6 +46,9 @@ public class ResultParser {
         // The root element will generally be a div with an id attribute:
         try {
             final String topDivId = mStructParser.getCurrentAttribute("id");
+
+            MyLogger.setLevel(Level.FINER);
+            MyLogger.log(Level.INFO, "Read `{0}` from JSON, as the result top level id", topDivId);
 
             WebElement topDiv = mDriver.findElement(By.id(topDivId));
 
