@@ -60,7 +60,7 @@ public class WebDriverTest {
             // parse the result, using the json file containing its structure
 
             JSONResultStructParser jsonParser = new JSONResultStructParser();
-            jsonParser.parse(reader);
+            jsonParser.init(reader);
 
             new ResultParser(driver, jsonParser);
         } catch (Exception ex) {

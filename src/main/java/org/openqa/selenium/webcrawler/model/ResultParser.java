@@ -21,96 +21,86 @@
 
 package org.openqa.selenium.webcrawler.model;
 
+import java.util.*;
+import java.util.logging.Level;
+import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.webcrawler.MyLogger;
-import java.util.*;
-import java.util.logging.Level;
 
 public class ResultParser {
     private WebDriver mDriver;
     private JSONResultStructParser mStructParser;
     private Map<String, Object> mResults = new HashMap<>();
 
+    // TODO: remove and parse it from the JSON struct file
+    final String resultIdAttribute = "data-store-id";
+    final String resultDivClass = "wpsl-store-location";
+    final String resultAddressSpanClass = "wpsl-street";
+
     public ResultParser(WebDriver driver, JSONResultStructParser structure) throws Exception {
         mDriver = driver;
         mStructParser = structure;
 
-        // TODO: remove and parse it from the JSON struct file
-        final String resultIdAttribute = "data-store-id";
-        final String resultDivClass = "wpsl-store-location";
-        final String resultAddressSpanClass = "wpsl-street";
-
-        // The root element will generally be a div with an id attribute:
+        // The root element will generally be identified by its id attribute:
         try {
-            final String topDivId = mStructParser.getCurrentAttribute("id");
+            final String topElemTag = mStructParser.getCurrentTag();
+            JSONObject idAttribute = mStructParser.getCurrentAttribute("id");
+
+            if (idAttribute == null) {
+                throw new Exception("The JSON top object doesn't have any id attribute");
+            }
+
+            final String topElemId = (String) idAttribute.get("value");
 
             MyLogger.setLevel(Level.FINER);
-            MyLogger.log(Level.INFO, "Read `{0}` from JSON, as the result top level id", topDivId);
+            MyLogger.log(Level.INFO, "Read the result element tag `{0}` and id `{1}` from JSON",
+                topElemTag, topElemId);
 
-            WebElement topDiv = mDriver.findElement(By.id(topDivId));
+            final WebElement topElem = mDriver.findElement(By.id(topElemId));
 
-            WebElement resultListHead = topDiv.findElements(By.xpath("./child::*")).get(0);
+            if (!topElem.getTagName().equals(topElemTag)) {
+                throw new ParseException(0, "The element found in the DOM, with the provided id, doesn't have the "
+                    + "correct tag name: " + topElem.getTagName() + " found instead of " + topElemTag + " expected");
+            }
 
-            List<WebElement> resultListItems = resultListHead.findElements(By.xpath("./child::*"));
-            final int resultCount =  resultListItems.size();
-            System.out.println(resultCount);
-
-            for (final WebElement listItem: resultListItems) {
-                var result = new SearchResult();
-
-                System.out.println("");
-
-                // Id
-                result.setId(Integer.valueOf(listItem.getAttribute(resultIdAttribute)));
-                System.out.println("id = " + result.getId());
-
-                // Name
-                final WebElement itemDiv = listItem.findElements(By.className(resultDivClass)).get(0);
-                final WebElement divParagraph = itemDiv.findElements(By.xpath("./child::*")).get(0);
-
-                final List<WebElement> itemLines = divParagraph.findElements(By.xpath("./child::*"));
-                final int itemLineCount = itemLines.size();
-                System.out.println("itemLineCount = " + itemLineCount);
-
-                result.setName(itemLines.get(0).getText());
-                System.out.println("name = " + result.getName());
-
-                // Address
-                final List<WebElement> itemAddressLines = divParagraph.findElements(By.className(resultAddressSpanClass));
-                final int addressLineCount = itemAddressLines.size();
-                System.out.println("addressLineCount = " + addressLineCount);
-
-                final ArrayList<String> addressLines = new ArrayList<>();
-                for (final WebElement addressLinElement: itemAddressLines) {
-                    addressLines.add(addressLinElement.getText());
-                }
-                result.setAddressLines(addressLines.toArray(new String[0]));
-                for (final String addressLine: result.getAddressLines()) {
-                    System.out.println("address line = " + addressLine);
-                }
-
-                // City
-                final List<WebElement> itemCityLines = itemLines.subList(1 + addressLineCount, itemLineCount);
-
-                final ArrayList<String> cityLines = new ArrayList<>();
-                for (final WebElement itemCityLineElement: itemCityLines) {
-                    cityLines.add(itemCityLineElement.getText());
-                }
-                result.setCityLines(cityLines.toArray(new String[0]));
-                for (final String cityLine: result.getCityLines()) {
-                    System.out.println("city line = " + cityLine);
-                }
-
-                // Write data to the DB
-                //(new CrawledRPInfosDBEntry(String.valueOf(result.getId()), result)).createFields();
-
-                //break;
+            if(mStructParser.goToChild(0) != null) {
+                parse();
             }
         } catch (ParseException e) {
-            throw new Exception("Exception while parsing the search result: " + e.getMessage());
+            throw new Exception("Exception while parsing the search result: " + e);
+        }
+    }
+
+    private void parse() throws Exception {
+
+        // The root element will generally be identified by its id attribute:
+        try {
+            final String tag = mStructParser.getCurrentTag();
+            final String id = mStructParser.getCurrentAttributeValue("id");
+            final String elemClass = mStructParser.getCurrentAttributeValue("class");
+
+            MyLogger.setLevel(Level.FINER);
+            MyLogger.log(Level.INFO, "Read the result element tag `{0}`, with {1} and {2} from JSON",
+                tag,
+                !id.equals("") ? ("id " + id) : "no id",
+                !elemClass.equals("") ? ("class " + elemClass) : "no class");
+
+            int i = 0;
+            JSONObject parent;
+            while (true) {
+                parent = mStructParser.goToChild(i++);
+                if (parent != null) {
+                    parse();
+                    mStructParser.setCurrent(parent);
+                } else {
+                    break;
+                }
+            }
+        } catch (ParseException e) {
+            throw new Exception("Exception while parsing the search result: " + e);
         }
     }
 }
