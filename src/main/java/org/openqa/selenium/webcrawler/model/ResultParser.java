@@ -59,30 +59,38 @@ public class ResultParser {
             final WebElement topElem = mDriver.findElement(By.id(topElemId));
             if (!topElem.getTagName().equals(topElemTag)) {
                 throw new ParseException(0, "The element found in the DOM, with the provided id, doesn't have the "
-                    + "correct tag name: " + topElem.getTagName() + " found instead of " + topElemTag + " expected");
+                    + "right tag name: " + topElem.getTagName() + " found instead of " + topElemTag + " expected");
             }
 
             if(mStructParser.goToChild(0) != null) {
-                parse();
+                parse(topElem, 0);
             }
         } catch (ParseException e) {
             throw new Exception("Exception while parsing the search result: " + e);
         }
     }
 
-    private void parse() throws Exception {
+    private void parse(WebElement startElem, int childIndex) throws Exception {
 
         // The root element will generally be identified by its id attribute:
         try {
             MyLogger.setLevel(Level.FINER);
             MyLogger.log(Level.INFO, mStructParser.getCurrentInfo() + " was read from JSON");
 
+            // Find the DOM child element which matches the current JSON node
+            WebElement elem = startElem.findElements(By.xpath("./child::*")).get(childIndex);
+
+            if (!elem.getTagName().equals(mStructParser.getCurrentTag())) {
+                throw new Exception("The child DOM element doesn't have the right tag name: "
+                    + elem.getTagName() + " found instead of " + mStructParser.getCurrentTag() + " expected");
+            }
+
             int i = 0;
             JSONObject parent;
             while (true) {
                 parent = mStructParser.goToChild(i++);
                 if (parent != null) {
-                    parse();
+                    parse(elem, i - 1);
                     mStructParser.startFrom(parent);
                 } else {
                     break;

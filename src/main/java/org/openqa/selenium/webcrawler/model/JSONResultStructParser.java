@@ -27,12 +27,28 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.openqa.selenium.webcrawler.MyLogger;
 import java.io.FileReader;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.logging.Level;
 
 public class JSONResultStructParser extends JSONParser {
     private JSONObject mRoot;
     private JSONObject mCurrent;
+    // Cache data
+    private String mCurrentTag;
+    private Map<String, Object> mCurrentAttributes;
+    private Map<String, String> mCurrentAttributeValues;
+    private boolean mIsCurrentMultiple;
+    private String mCurrentInfo;
+
+    public JSONResultStructParser() {
+        mCurrentTag = "";
+        mCurrentAttributes = new HashMap<>();
+        mCurrentAttributeValues = new HashMap<>();
+        mIsCurrentMultiple = false;
+        mCurrentInfo = "";
+    }
 
     public JSONObject init(FileReader reader) throws ParseException {
         try {
@@ -72,6 +88,13 @@ public class JSONResultStructParser extends JSONParser {
             JSONObject parent = mCurrent;
             mCurrent = innerObj;
 
+            // Reset the cache data for the child node
+            mCurrentTag = "";
+            mCurrentAttributes = new HashMap<>();
+            mCurrentAttributeValues = new HashMap<>();
+            mIsCurrentMultiple = false;
+            mCurrentInfo = "";
+
             // Return the parent node, so it can be saved by the class user.
             return parent;
         }
@@ -80,16 +103,25 @@ public class JSONResultStructParser extends JSONParser {
     }
 
     public String getCurrentTag() throws ParseException {
-        var tag = (String) mCurrent.get("tag");
+        if (!mCurrentTag.equals("")) {
+            return mCurrentTag;
+        }
+
+        final var tag = (String) mCurrent.get("tag");
 
         if (tag == null) {
             throw new ParseException(0, "Current object has no `tag` field");
         }
 
+        mCurrentTag = tag;
         return tag;
     }
 
     public JSONObject getCurrentAttribute(String key) throws ParseException {
+        if (mCurrentAttributes.get(key) != null) {
+            return (JSONObject) mCurrentAttributes.get(key);
+        }
+
         var attributeArray = (JSONArray) mCurrent.get("attributes");
 
         if (attributeArray == null) {
@@ -116,6 +148,7 @@ public class JSONResultStructParser extends JSONParser {
                         + "while trying to read it");
                 }
 
+                mCurrentAttributes.put(key, innerObj);
                 return innerObj;
             }
         }
@@ -125,33 +158,53 @@ public class JSONResultStructParser extends JSONParser {
     }
 
     public String getCurrentAttributeValue(String key) throws ParseException {
+        if (mCurrentAttributeValues.get(key) != null) {
+            return mCurrentAttributeValues.get(key);
+        }
+
         JSONObject attribute = getCurrentAttribute(key);
 
         if (attribute != null) {
-            return (String) attribute.get("value");
+            final String value = (String) attribute.get("value");
+            mCurrentAttributeValues.put(key, value);
+            return value;
         } else {
             return "";
         }
     }
 
     public boolean isCurrentMultiple() throws ParseException {
+        if (!mIsCurrentMultiple) {
+            return true;
+        }
+
         var multiple = (Boolean) mCurrent.get("isMultiple");
 
-        return (multiple != null && multiple == true);
+        final boolean isMultiple = (multiple != null && multiple == true);
+        mIsCurrentMultiple = isMultiple;
+
+        return isMultiple;
     }
 
     public String getCurrentInfo() throws ParseException {
+        if (!mCurrentInfo.equals("")) {
+            return mCurrentInfo;
+        }
+
         try {
             final String tag = getCurrentTag();
             final String id = getCurrentAttributeValue("id");
             final String elemClass = getCurrentAttributeValue("class");
             final boolean multiple = isCurrentMultiple();
 
-            return String.format("Result node with tag `%s`, %s, %s%s",
+            final String info = String.format("Result node with tag `%s`, %s, %s%s",
                 tag,
                 !id.equals("") ? ("id `" + id + "`") : "no id",
                 !elemClass.equals("") ? ("class `" + elemClass + "`") : "no class",
                 multiple ? " and multiple" : "");
+            mCurrentInfo = info;
+
+            return info;
         } catch (ParseException e) {
             throw new ParseException(0, "Error while trying to display node info: " + e);
         }
