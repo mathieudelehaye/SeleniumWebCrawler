@@ -147,11 +147,11 @@ public class JSONResultStructParser extends JSONParser {
             final String elemClass = getCurrentAttributeValue("class");
             final boolean multiple = isCurrentMultiple();
 
-            return String.format("Result node with tag `%s`, %s, %s and %s",
+            return String.format("Result node with tag `%s`, %s, %s%s",
                 tag,
                 !id.equals("") ? ("id `" + id + "`") : "no id",
                 !elemClass.equals("") ? ("class `" + elemClass + "`") : "no class",
-                multiple ? "multiple" : "not multiple");
+                multiple ? " and multiple" : "");
         } catch (ParseException e) {
             throw new ParseException(0, "Error while trying to display node info: " + e);
         }

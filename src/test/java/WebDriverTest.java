@@ -59,7 +59,7 @@ public class WebDriverTest {
         try (FileReader reader = new FileReader(ClassLoader.getSystemResource(structFilePath).getFile())) {
             // parse the result, using the json file containing its structure
 
-            JSONResultStructParser jsonParser = new JSONResultStructParser();
+            var jsonParser = new JSONResultStructParser();
             jsonParser.init(reader);
 
             new ResultParser(driver, jsonParser);
