@@ -47,20 +47,16 @@ public class ResultParser {
         // The root element will generally be identified by its id attribute:
         try {
             final String topElemTag = mStructParser.getCurrentTag();
-            JSONObject idAttribute = mStructParser.getCurrentAttribute("id");
+            final String topElemId = mStructParser.getCurrentAttributeValue("id");
 
-            if (idAttribute == null) {
+            if (topElemId.equals("")) {
                 throw new Exception("The JSON top object doesn't have any id attribute");
             }
 
-            final String topElemId = (String) idAttribute.get("value");
-
             MyLogger.setLevel(Level.FINER);
-            MyLogger.log(Level.INFO, "Read the result element tag `{0}` and id `{1}` from JSON",
-                topElemTag, topElemId);
+            MyLogger.log(Level.INFO, mStructParser.getCurrentInfo() + " was read from JSON");
 
             final WebElement topElem = mDriver.findElement(By.id(topElemId));
-
             if (!topElem.getTagName().equals(topElemTag)) {
                 throw new ParseException(0, "The element found in the DOM, with the provided id, doesn't have the "
                     + "correct tag name: " + topElem.getTagName() + " found instead of " + topElemTag + " expected");
@@ -78,15 +74,8 @@ public class ResultParser {
 
         // The root element will generally be identified by its id attribute:
         try {
-            final String tag = mStructParser.getCurrentTag();
-            final String id = mStructParser.getCurrentAttributeValue("id");
-            final String elemClass = mStructParser.getCurrentAttributeValue("class");
-
             MyLogger.setLevel(Level.FINER);
-            MyLogger.log(Level.INFO, "Read the result element tag `{0}`, with {1} and {2} from JSON",
-                tag,
-                !id.equals("") ? ("id " + id) : "no id",
-                !elemClass.equals("") ? ("class " + elemClass) : "no class");
+            MyLogger.log(Level.INFO, mStructParser.getCurrentInfo() + " was read from JSON");
 
             int i = 0;
             JSONObject parent;
@@ -94,7 +83,7 @@ public class ResultParser {
                 parent = mStructParser.goToChild(i++);
                 if (parent != null) {
                     parse();
-                    mStructParser.setCurrent(parent);
+                    mStructParser.startFrom(parent);
                 } else {
                     break;
                 }

@@ -34,10 +34,6 @@ public class JSONResultStructParser extends JSONParser {
     private JSONObject mRoot;
     private JSONObject mCurrent;
 
-    public void setCurrent(JSONObject node) {
-        mCurrent = node;
-    }
-
     public JSONObject init(FileReader reader) throws ParseException {
         try {
             mRoot = (JSONObject) super.parse(reader);
@@ -47,6 +43,10 @@ public class JSONResultStructParser extends JSONParser {
         }
 
         return mRoot;
+    }
+
+    public void startFrom(JSONObject node) {
+        mCurrent = node;
     }
 
     public JSONObject goToChild(int index) {
@@ -69,11 +69,11 @@ public class JSONResultStructParser extends JSONParser {
         }
 
         if (innerObj != null) {
-            JSONObject output = mCurrent;
+            JSONObject parent = mCurrent;
             mCurrent = innerObj;
 
             // Return the parent node, so it can be saved by the class user.
-            return output;
+            return parent;
         }
 
         return null;
@@ -131,6 +131,29 @@ public class JSONResultStructParser extends JSONParser {
             return (String) attribute.get("value");
         } else {
             return "";
+        }
+    }
+
+    public boolean isCurrentMultiple() throws ParseException {
+        var multiple = (Boolean) mCurrent.get("isMultiple");
+
+        return (multiple != null && multiple == true);
+    }
+
+    public String getCurrentInfo() throws ParseException {
+        try {
+            final String tag = getCurrentTag();
+            final String id = getCurrentAttributeValue("id");
+            final String elemClass = getCurrentAttributeValue("class");
+            final boolean multiple = isCurrentMultiple();
+
+            return String.format("Result node with tag `%s`, %s, %s and %s",
+                tag,
+                !id.equals("") ? ("id `" + id + "`") : "no id",
+                !elemClass.equals("") ? ("class `" + elemClass + "`") : "no class",
+                multiple ? "multiple" : "not multiple");
+        } catch (ParseException e) {
+            throw new ParseException(0, "Error while trying to display node info: " + e);
         }
     }
 }
