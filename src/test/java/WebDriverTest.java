@@ -22,15 +22,19 @@
 import org.junit.jupiter.api.Test;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.*;
+import org.openqa.selenium.webcrawler.MyLogger;
 import org.openqa.selenium.webcrawler.model.JSONResultStructParser;
 import org.openqa.selenium.webcrawler.model.ResultParser;
 import java.io.FileReader;
+import java.util.logging.Level;
 
 public class WebDriverTest {
     @Test
     public void testRPSearch() throws InterruptedException {
 
         final int pauseTimeInSec = 3;
+
+        MyLogger.setLevel(Level.FINER);
 
         // Optional. If not specified, WebDriverTest searches the PATH for chromedriver.
         System.setProperty("webdriver.chrome.driver",

@@ -37,7 +37,7 @@ public class JSONResultStructParser extends JSONParser {
     private JSONObject mCurrent;
     // Cache data
     private String mCurrentTag;
-    private Map<String, Object> mCurrentAttributes;
+    private Map<String, JSONObject> mCurrentAttributes;
     private Map<String, String> mCurrentAttributeValues;
     private boolean mIsCurrentMultiple;
     private String mCurrentInfo;
@@ -117,6 +117,32 @@ public class JSONResultStructParser extends JSONParser {
         return tag;
     }
 
+    public Map<String, JSONObject> getCurrentAttributes() throws ParseException {
+        var attributeArray = (JSONArray) mCurrent.get("attributes");
+
+        if (attributeArray != null) {
+
+            if (attributeArray.size() == mCurrentAttributes.size()) {
+                return mCurrentAttributes;
+            }
+
+            final Iterator attribute = attributeArray.iterator();
+
+            while (attribute.hasNext()) {
+                var innerObj = (JSONObject) attribute.next();
+
+                final var attributeKey = (String)innerObj.get("key");
+                if (attributeKey == null) {
+                    throw new ParseException(0, "Current `attributes` item has no `key` field");
+                }
+
+                mCurrentAttributes.put(attributeKey, innerObj);
+            }
+        }
+
+        return mCurrentAttributes;
+    }
+
     public JSONObject getCurrentAttribute(String key) throws ParseException {
         if (mCurrentAttributes.get(key) != null) {
             return (JSONObject) mCurrentAttributes.get(key);
@@ -134,7 +160,7 @@ public class JSONResultStructParser extends JSONParser {
         String attributeValue;
         while (attribute.hasNext()) {
             var innerObj = (JSONObject) attribute.next();
-            var attributeKey = (String)innerObj.get("key");
+            final var attributeKey = (String)innerObj.get("key");
 
             if (attributeKey == null) {
                 throw new ParseException(0, "Current `attributes` item has no `key` field");

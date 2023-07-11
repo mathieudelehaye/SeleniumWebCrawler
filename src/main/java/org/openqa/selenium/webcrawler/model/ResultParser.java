@@ -21,7 +21,7 @@
 
 package org.openqa.selenium.webcrawler.model;
 
-import java.util.*;
+import java.util.Map;
 import java.util.logging.Level;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
@@ -33,7 +33,7 @@ import org.openqa.selenium.webcrawler.MyLogger;
 public class ResultParser {
     private WebDriver mDriver;
     private JSONResultStructParser mStructParser;
-    private Map<String, Object> mResults = new HashMap<>();
+    private ResultMap mResults = new ResultMap();
 
     // TODO: remove and parse it from the JSON struct file
     final String resultIdAttribute = "data-store-id";
@@ -53,7 +53,6 @@ public class ResultParser {
                 throw new Exception("The JSON top object doesn't have any id attribute");
             }
 
-            MyLogger.setLevel(Level.FINER);
             MyLogger.log(Level.INFO, mStructParser.getCurrentInfo() + " was read from JSON");
 
             final WebElement topElem = mDriver.findElement(By.id(topElemId));
@@ -62,36 +61,66 @@ public class ResultParser {
                     + "right tag name: " + topElem.getTagName() + " found instead of " + topElemTag + " expected");
             }
 
-            if(mStructParser.goToChild(0) != null) {
-                parse(topElem, 0);
+            if (mStructParser.goToChild(0) != null) {
+                parseChild(topElem, 0);
             }
         } catch (ParseException e) {
             throw new Exception("Exception while parsing the search result: " + e);
         }
     }
 
-    private void parse(WebElement startElem, int childIndex) throws Exception {
+    private void parseChild(WebElement parentElem, int childIndex) throws Exception {
 
-        // The root element will generally be identified by its id attribute:
         try {
-            MyLogger.setLevel(Level.FINER);
-            MyLogger.log(Level.INFO, mStructParser.getCurrentInfo() + " was read from JSON");
+            MyLogger.log(Level.FINE, mStructParser.getCurrentInfo() + " was read from JSON");
 
-            // Find the DOM child element which matches the current JSON node
-            WebElement elem = startElem.findElements(By.xpath("./child::*")).get(childIndex);
+            // Check if the tag of the DOM child element matches the current JSON node
+            WebElement elem = parentElem.findElements(By.xpath("./child::*")).get(childIndex);
 
             if (!elem.getTagName().equals(mStructParser.getCurrentTag())) {
                 throw new Exception("The child DOM element doesn't have the right tag name: "
                     + elem.getTagName() + " found instead of " + mStructParser.getCurrentTag() + " expected");
             }
 
+            // If the tag is `ul`, add a nesting level
+            if (mStructParser.getCurrentTag().equals("ul")) {
+                mResults.increaseNesting();
+            }
+
+            if (mStructParser.getCurrentTag().equals("li")) {
+                Map<String, JSONObject> attributes = mStructParser.getCurrentAttributes();
+
+                for (JSONObject attribute: attributes.values()) {
+                    final String attributeValue = (String)attribute.get("value");
+
+                    if (attributeValue == null) {
+                        throw new Exception("JSON node attribute has no value");
+                    }
+
+                    if (attributeValue.charAt(0) == '$') {
+                        final String attributeKey = (String)attribute.get("key");
+
+                        if (attributeKey == null) {
+                            throw new Exception("JSON node attribute has no key");
+                        }
+
+                        final String elemAttributeValue = elem.getAttribute(attributeKey);
+                        if (elem.getAttribute(attributeKey) != null) {
+                            mResults.put(attributeKey, elemAttributeValue);
+                        }
+                    }
+                }
+            }
+
+            MyLogger.log(Level.FINER, "Current result: " + mResults.getDigest());
+
             int i = 0;
-            JSONObject parent;
+            JSONObject parentNode;
             while (true) {
-                parent = mStructParser.goToChild(i++);
-                if (parent != null) {
-                    parse(elem, i - 1);
-                    mStructParser.startFrom(parent);
+                parentNode = mStructParser.goToChild(i++);
+                if (parentNode != null) {
+                    parseChild(elem, i - 1);
+                    mStructParser.startFrom(parentNode);
                 } else {
                     break;
                 }
