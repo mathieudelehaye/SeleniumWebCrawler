@@ -19,18 +19,18 @@
 //  You should have received a copy of the GNU Affero General Public License along with this program. If not, see
 //  <https://www.gnu.org/licenses/>.
 
+import java.io.FileReader;
+import java.util.logging.Level;
 import org.junit.jupiter.api.Test;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.*;
 import org.openqa.selenium.webcrawler.MyLogger;
 import org.openqa.selenium.webcrawler.model.JSONResultStructParser;
 import org.openqa.selenium.webcrawler.model.ResultParser;
-import java.io.FileReader;
-import java.util.logging.Level;
 
 public class WebDriverTest {
     @Test
-    public void testRPSearch() throws InterruptedException {
+    public void testResultSearch() throws InterruptedException {
 
         final int pauseTimeInSec = 3;
 
@@ -60,7 +60,7 @@ public class WebDriverTest {
 
         // Get the results
         final String structFilePath = "json/recycling_points_results.json";
-        try (FileReader reader = new FileReader(ClassLoader.getSystemResource(structFilePath).getFile())) {
+        try (var reader = new FileReader(ClassLoader.getSystemResource(structFilePath).getFile())) {
             // parse the result, using the json file containing its structure
 
             var jsonParser = new JSONResultStructParser();

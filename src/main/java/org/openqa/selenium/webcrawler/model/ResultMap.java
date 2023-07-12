@@ -62,8 +62,6 @@ public class ResultMap extends HashMap<String, Object> {
     }
 
     private void parseFrom(Map<String, Object> start, int nesting, StringBuilder digest) throws Exception {
-        MyLogger.log(Level.FINE, "mdl parseFrom entered");
-
         // Build the indent prefix for the current nesting level
         var indentBuilder = new StringBuilder();
         for(int i = 0; i < nesting; i++) {

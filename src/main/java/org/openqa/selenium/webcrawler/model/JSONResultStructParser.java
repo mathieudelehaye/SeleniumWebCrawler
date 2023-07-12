@@ -200,16 +200,11 @@ public class JSONResultStructParser extends JSONParser {
     }
 
     public boolean isCurrentMultiple() throws ParseException {
-        if (!mIsCurrentMultiple) {
-            return true;
-        }
-
         var multiple = (Boolean) mCurrent.get("isMultiple");
 
-        final boolean isMultiple = (multiple != null && multiple == true);
-        mIsCurrentMultiple = isMultiple;
+        mIsCurrentMultiple = (multiple != null && multiple == true);
 
-        return isMultiple;
+        return mIsCurrentMultiple;
     }
 
     public String getCurrentInfo() throws ParseException {

@@ -44,8 +44,8 @@ public class ResultParser {
         mDriver = driver;
         mStructParser = structure;
 
-        // The root element will generally be identified by its id attribute:
         try {
+            // The root element needs to be identified by its id attribute
             final String topElemTag = mStructParser.getCurrentTag();
             final String topElemId = mStructParser.getCurrentAttributeValue("id");
 
@@ -53,30 +53,24 @@ public class ResultParser {
                 throw new Exception("The JSON top object doesn't have any id attribute");
             }
 
-            MyLogger.log(Level.INFO, mStructParser.getCurrentInfo() + " was read from JSON");
-
             final WebElement topElem = mDriver.findElement(By.id(topElemId));
             if (!topElem.getTagName().equals(topElemTag)) {
                 throw new ParseException(0, "The element found in the DOM, with the provided id, doesn't have the "
                     + "right tag name: " + topElem.getTagName() + " found instead of " + topElemTag + " expected");
             }
 
-            if (mStructParser.goToChild(0) != null) {
-                parseChild(topElem, 0);
-            }
-        } catch (ParseException e) {
+            parse(topElem);
+        } catch (Exception e) {
             throw new Exception("Exception while parsing the search result: " + e);
         }
     }
 
-    private void parseChild(WebElement parentElem, int childIndex) throws Exception {
+    private void parse(WebElement elem) throws Exception {
 
         try {
             MyLogger.log(Level.FINE, mStructParser.getCurrentInfo() + " was read from JSON");
 
             // Check if the tag of the DOM child element matches the current JSON node
-            WebElement elem = parentElem.findElements(By.xpath("./child::*")).get(childIndex);
-
             if (!elem.getTagName().equals(mStructParser.getCurrentTag())) {
                 throw new Exception("The child DOM element doesn't have the right tag name: "
                     + elem.getTagName() + " found instead of " + mStructParser.getCurrentTag() + " expected");
@@ -87,43 +81,46 @@ public class ResultParser {
                 mResults.increaseNesting();
             }
 
-            if (mStructParser.getCurrentTag().equals("li")) {
-                Map<String, JSONObject> attributes = mStructParser.getCurrentAttributes();
+            // Check the element attributes if any
+            Map<String, JSONObject> attributes = mStructParser.getCurrentAttributes();
 
-                for (JSONObject attribute: attributes.values()) {
-                    final String attributeValue = (String)attribute.get("value");
+            for (JSONObject attribute: attributes.values()) {
+                final var attributeValue = (String)attribute.get("value");
 
-                    if (attributeValue == null) {
-                        throw new Exception("JSON node attribute has no value");
+                if (attributeValue == null) {
+                    throw new Exception("JSON node attribute has no value");
+                }
+
+                if (attributeValue.charAt(0) == '$') {
+                    final String attributeKey = (String)attribute.get("key");
+
+                    if (attributeKey == null) {
+                        throw new Exception("JSON node attribute has no key");
                     }
 
-                    if (attributeValue.charAt(0) == '$') {
-                        final String attributeKey = (String)attribute.get("key");
-
-                        if (attributeKey == null) {
-                            throw new Exception("JSON node attribute has no key");
-                        }
-
-                        final String elemAttributeValue = elem.getAttribute(attributeKey);
-                        if (elem.getAttribute(attributeKey) != null) {
-                            mResults.put(attributeKey, elemAttributeValue);
-                        }
+                    final String elemAttributeValue = elem.getAttribute(attributeKey);
+                    if (elem.getAttribute(attributeKey) != null) {
+                        mResults.put(attributeKey, elemAttributeValue);
                     }
                 }
             }
 
             MyLogger.log(Level.FINER, "Current result: " + mResults.getDigest());
 
+            // Parse the child elements
             int i = 0;
-            JSONObject parentNode;
             while (true) {
-                parentNode = mStructParser.goToChild(i++);
-                if (parentNode != null) {
-                    parseChild(elem, i - 1);
-                    mStructParser.startFrom(parentNode);
-                } else {
+                JSONObject parentNode = mStructParser.goToChild(i);
+                if (parentNode == null) {
                     break;
                 }
+
+                WebElement child = elem.findElements(By.xpath("./child::*")).get(i);
+
+                parse(child);
+
+                i++;
+                mStructParser.startFrom(parentNode);
             }
         } catch (ParseException e) {
             throw new Exception("Exception while parsing the search result: " + e);
