@@ -1,5 +1,5 @@
-//
-//  WebDriverTest.java
+package java.org.openqa.selenium.webcrawler;//
+//  java.org.openqa.selenium.webcrawler.WebDriverTest.java
 //
 //  Created by Mathieu Delehaye on 12/03/2023.
 //
@@ -25,8 +25,8 @@ import org.junit.jupiter.api.Test;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.*;
 import org.openqa.selenium.webcrawler.MyLogger;
-import org.openqa.selenium.webcrawler.model.JSONResultStructParser;
-import org.openqa.selenium.webcrawler.model.ResultParser;
+import org.openqa.selenium.webcrawler.model.JSON.JSONResultStructParser;
+import org.openqa.selenium.webcrawler.model.CrawlResult.ResultParser;
 
 public class WebDriverTest {
     @Test
@@ -36,7 +36,7 @@ public class WebDriverTest {
 
         MyLogger.setLevel(Level.FINER);
 
-        // Optional. If not specified, WebDriverTest searches the PATH for chromedriver.
+        // Optional. If not specified, java.org.openqa.selenium.webcrawler.WebDriverTest searches the PATH for chromedriver.
         System.setProperty("webdriver.chrome.driver",
             "/Volumes/portable-ssd/Web_Development/_J/chromedriver_mac64/chromedriver");
 

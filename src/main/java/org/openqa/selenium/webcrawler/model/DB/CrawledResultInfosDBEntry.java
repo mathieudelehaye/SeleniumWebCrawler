@@ -1,5 +1,5 @@
 //
-//  CrawledRPInfosDBEntry.java
+//  CrawledResultInfosDBEntry.java
 //
 //  Created by Mathieu Delehaye on 15/03/2023.
 //
@@ -19,7 +19,7 @@
 //  You should have received a copy of the GNU Affero General Public License along with this program. If not, see
 //  <https://www.gnu.org/licenses/>.
 
-package org.openqa.selenium.webcrawler.model;
+package org.openqa.selenium.webcrawler.model.DB;
 
 import com.google.api.core.ApiFuture;
 import com.google.auth.oauth2.GoogleCredentials;
@@ -33,12 +33,12 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
-public class CrawledRPInfosDBEntry {
+public class CrawledResultInfosDBEntry {
     private SearchResult mEntry;
     private String mEntryKey;
     private Firestore mDatabase;
 
-    public CrawledRPInfosDBEntry(String keySeed, SearchResult data) throws IOException {
+    public CrawledResultInfosDBEntry(String keySeed, SearchResult data) throws IOException {
 
         final String DBName = "beautyorder-fa43e";
 

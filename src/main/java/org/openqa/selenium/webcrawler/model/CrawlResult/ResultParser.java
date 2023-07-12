@@ -19,7 +19,7 @@
 //  You should have received a copy of the GNU Affero General Public License along with this program. If not, see
 //  <https://www.gnu.org/licenses/>.ses/>.
 
-package org.openqa.selenium.webcrawler.model;
+package org.openqa.selenium.webcrawler.model.CrawlResult;
 
 import java.util.Map;
 import java.util.logging.Level;
@@ -29,6 +29,7 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.webcrawler.MyLogger;
+import org.openqa.selenium.webcrawler.model.JSON.JSONResultStructParser;
 
 public class ResultParser {
     private WebDriver mDriver;

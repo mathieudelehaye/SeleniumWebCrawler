@@ -19,7 +19,7 @@
 //  You should have received a copy of the GNU Affero General Public License along with this program. If not, see
 //  <https://www.gnu.org/licenses/>.ses/>.
 
-package org.openqa.selenium.webcrawler.model;
+package org.openqa.selenium.webcrawler.model.CrawlResult;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -62,8 +62,8 @@ public class ResultMap extends HashMap<String, Object> {
     }
 
     private void parseFrom(Map<String, Object> start, int nesting, StringBuilder digest) throws Exception {
-        // Build the indent prefix for the current nesting level
-        var indentBuilder = new StringBuilder();
+        // Build the indent tab prefix for the current nesting level
+        final var indentBuilder = new StringBuilder();
         for(int i = 0; i < nesting; i++) {
             indentBuilder.append("  ");
         }

@@ -19,7 +19,7 @@
 //  You should have received a copy of the GNU Affero General Public License along with this program. If not, see
 //  <https://www.gnu.org/licenses/>.ses/>.
 
-package org.openqa.selenium.webcrawler.model;
+package org.openqa.selenium.webcrawler.model.DB;
 
 public class SearchResult {
     private int mId;
