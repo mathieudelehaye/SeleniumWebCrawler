@@ -19,13 +19,13 @@
 //  You should have received a copy of the GNU Affero General Public License along with this program. If not, see
 //  <https://www.gnu.org/licenses/>.ses/>.
 
-package org.openqa.selenium.webcrawler.model.CrawlResult;
+package selenium.webcrawler.model.CrawlResult;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
-import org.openqa.selenium.webcrawler.MyLogger;
+import selenium.webcrawler.MyLogger;
 
 public class ResultMap extends HashMap<String, Object> {
     private Map<String, Object> mCurrentNestedMap;

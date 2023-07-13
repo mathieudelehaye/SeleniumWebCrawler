@@ -1,5 +1,5 @@
-package java.org.openqa.selenium.webcrawler;//
-//  java.org.openqa.selenium.webcrawler.WebDriverTest.java
+//
+//  WebDriverTest.java
 //
 //  Created by Mathieu Delehaye on 12/03/2023.
 //
@@ -19,26 +19,30 @@ package java.org.openqa.selenium.webcrawler;//
 //  You should have received a copy of the GNU Affero General Public License along with this program. If not, see
 //  <https://www.gnu.org/licenses/>.
 
+package selenium.webcrawler;
+
 import java.io.FileReader;
 import java.util.logging.Level;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.*;
-import org.openqa.selenium.webcrawler.MyLogger;
-import org.openqa.selenium.webcrawler.model.JSON.JSONResultStructParser;
-import org.openqa.selenium.webcrawler.model.CrawlResult.ResultParser;
+import selenium.webcrawler.model.JSON.JSONResultStructParser;
+import selenium.webcrawler.model.CrawlResult.ResultParser;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class WebDriverTest {
-    @Test
-    public void testResultSearch() throws InterruptedException {
+    final private static int mPauseTimeInSec = 3;
 
-        final int pauseTimeInSec = 3;
+    @BeforeAll
+    static void beforeAll() {
+        System.out.println("WebDriverTest: before all test methods");
 
-        MyLogger.setLevel(Level.FINER);
-
-        // Optional. If not specified, java.org.openqa.selenium.webcrawler.WebDriverTest searches the PATH for chromedriver.
+        // Optional. If not specified, java.org.openqa.selenium.webcrawler.WebDriverTest searches the PATH for
+        // chromedriver.
         System.setProperty("webdriver.chrome.driver",
             "/Volumes/portable-ssd/Web_Development/_J/chromedriver_mac64/chromedriver");
+
+        MyLogger.setLevel(Level.FINER);
 
         final String searchPageUrl = "https://britishbeautycouncil.com/recycling-points/";
         final String searchBoxElementName = "wpsl-search-input";
@@ -51,18 +55,17 @@ public class WebDriverTest {
         // Fill in the search box
         WebElement searchBox = driver.findElement(By.name(searchBoxElementName));
         searchBox.sendKeys(searchCriteria);
-        Thread.sleep(pauseTimeInSec * 1000);
+        Helpers.sleep(mPauseTimeInSec * 1000);
 
         // Submit the search
         WebElement searchButton = driver.findElement(By.id(searchButtonElementId));
         searchButton.click();
-        Thread.sleep(pauseTimeInSec * 1000);
+        Helpers.sleep(mPauseTimeInSec * 1000);
 
         // Get the results
         final String structFilePath = "json/recycling_points_results.json";
         try (var reader = new FileReader(ClassLoader.getSystemResource(structFilePath).getFile())) {
             // parse the result, using the json file containing its structure
-
             var jsonParser = new JSONResultStructParser();
             jsonParser.init(reader);
 
@@ -72,5 +75,25 @@ public class WebDriverTest {
         }
 
         driver.quit();
+    }
+
+    @BeforeEach
+    void beforeEach() {
+        System.out.println("WebDriverTest: before each test method");
+    }
+
+    @AfterEach
+    void afterEach() {
+        System.out.println("WebDriverTest: after each test method");
+    }
+
+    @AfterAll
+    static void afterAll() {
+        System.out.println("WebDriverTest: after all test methods");
+    }
+
+    @Test
+    public void testResultSearch() {
+        assertTrue(true);
     }
 }

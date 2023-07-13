@@ -19,18 +19,18 @@
 //  You should have received a copy of the GNU Affero General Public License along with this program. If not, see
 //  <https://www.gnu.org/licenses/>.ses/>.
 
-package org.openqa.selenium.webcrawler.model.JSON;
+package selenium.webcrawler.model.JSON;
 
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
-import org.openqa.selenium.webcrawler.MyLogger;
 import java.io.FileReader;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.logging.Level;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
+import selenium.webcrawler.MyLogger;
 
 public class JSONResultStructParser extends JSONParser {
     private JSONObject mRoot;

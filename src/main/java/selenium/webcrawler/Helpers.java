@@ -1,7 +1,7 @@
 //
-//  JSONResultStructParserTest.kt
+//  Helpers.java
 //
-//  Created by Mathieu Delehaye on 12/07/2023.
+//  Created by Mathieu Delehaye on 13/07/2023.
 //
 //  SeleniumWebCrawler: An app to automatically use search engines and store the results to a database.
 //
@@ -19,26 +19,14 @@
 //  You should have received a copy of the GNU Affero General Public License along with this program. If not, see
 //  <https://www.gnu.org/licenses/>.
 
-package java.org.openqa.selenium.webcrawler.model.JSON
+package selenium.webcrawler;
 
-import java.util.logging.Level
-import org.junit.jupiter.api.Test
-import org.openqa.selenium.webcrawler.MyLogger
-
-class JSONResultStructParserTest {
-    @Test
-    fun testResultSearch() {
-        MyLogger.setLevel(Level.FINER)
-
-
+public class Helpers {
+    public static void sleep(long timeInMSec) {
+        try {
+            Thread.sleep(timeInMSec);
+        } catch (InterruptedException ie) {
+            System.out.println(ie);
+        }
     }
-
-//    startFrom
-//    goToChild
-//  getCurrentTag
-//    getCurrentAttributes
-//    getCurrentAttribute
-//    getCurrentAttributeValue
-//    isCurrentMultiple
-//    getCurrentInfo
 }

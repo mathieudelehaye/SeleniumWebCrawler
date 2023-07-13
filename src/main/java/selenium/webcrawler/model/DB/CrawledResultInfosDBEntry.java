@@ -19,7 +19,7 @@
 //  You should have received a copy of the GNU Affero General Public License along with this program. If not, see
 //  <https://www.gnu.org/licenses/>.
 
-package org.openqa.selenium.webcrawler.model.DB;
+package selenium.webcrawler.model.DB;
 
 import com.google.api.core.ApiFuture;
 import com.google.auth.oauth2.GoogleCredentials;
