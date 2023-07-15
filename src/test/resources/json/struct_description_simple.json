@@ -9,6 +9,12 @@
   "children": [
     {
       "tag": "ul",
+      "attributes": [
+        {
+          "key": "foo",
+          "value": "unordered-list-bar"
+        }
+      ],
       "children": [
         {
           "tag": "li",
@@ -16,6 +22,10 @@
             {
               "key": "list-item-id",
               "value": "$list_item_id"
+            },
+            {
+              "key": "list-item-date",
+              "value": "$list_item_date"
             }
           ],
           "children": [
@@ -24,7 +34,8 @@
               "children": [
                 {
                   "tag": "strong",
-                  "value": "$content-title"
+                  "value": "$content-title",
+                  "isMultiple": true
                 },
                 {
                   "tag": "span",
@@ -34,8 +45,7 @@
                       "value": "span-class-01"
                     }
                   ],
-                  "value": "$content-description",
-                  "isMultiple": true
+                  "value": "$content-description"
                 },
                 {
                   "tag": "span",

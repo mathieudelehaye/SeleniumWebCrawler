@@ -22,6 +22,7 @@
 package selenium.webcrawler.model.JSON;
 
 import java.io.FileReader;
+import java.util.Map;
 import java.util.logging.Level;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
@@ -41,6 +42,11 @@ public class JSONResultStructParserTest {
             "/Volumes/portable-ssd/Web_Development/_J/chromedriver_mac64/chromedriver");
 
         MyLogger.setLevel(Level.FINER);
+    }
+
+    @BeforeEach
+    void beforeEach() {
+        System.out.println("JSONResultStructParserTest: before each test method");
 
         // Parse the JSON file
         final String structFilePath = "json/struct_description_simple.json";
@@ -50,11 +56,6 @@ public class JSONResultStructParserTest {
         } catch (Exception ex) {
             ex.printStackTrace();
         }
-    }
-
-    @BeforeEach
-    void beforeEach() {
-        System.out.println("JSONResultStructParserTest: before each test method");
     }
 
     @AfterEach
@@ -68,17 +69,96 @@ public class JSONResultStructParserTest {
     }
 
     @Test
-    public void testReadTags() {
-        MyLogger.log(Level.INFO, readTag());
+    public void testReadNodeTags() {
         assertTrue(readTag().equals("div"));
 
         final JSONObject parent = mJsonParser.goToChild(0);
-        MyLogger.log(Level.INFO, readTag());
         assertTrue(readTag().equals("ul"));
 
         mJsonParser.startFrom(parent);
-        MyLogger.log(Level.INFO, readTag());
         assertTrue(readTag().equals("div"));
+    }
+
+    @Test
+    public void testReadNodeAttributes() {
+        mJsonParser.goToChild(0); // return value = <div> node
+        mJsonParser.goToChild(0); // return value = <ul> node
+
+        final Map<String, JSONObject> attributes = readAttributes();
+
+        final JSONObject attribute1 = attributes.get("list-item-id");
+        if (attribute1 != null) {
+            assertTrue(attribute1.get("key").equals("list-item-id"));
+            assertTrue(attribute1.get("value").equals("$list_item_id"));
+        } else {
+            assertTrue(false);
+        }
+
+        final JSONObject attribute2 = attributes.get("list-item-date");
+        if (attribute1 != null) {
+            assertTrue(attribute2.get("key").equals("list-item-date"));
+            assertTrue(attribute2.get("value").equals("$list_item_date"));
+        } else {
+            assertTrue(false);
+        }
+    }
+
+    @Test
+    public void testReadNodeAttribute() {
+        mJsonParser.goToChild(0); // return value = <div> node
+
+        final JSONObject attribute = readAttribute("foo");
+        if (attribute != null) {
+            assertTrue(attribute.get("key").equals("foo"));
+            assertTrue(attribute.get("value").equals("unordered-list-bar"));
+        } else {
+            assertTrue(false);
+        }
+    }
+
+    @Test
+    public void testReadNodeAttributeValue() {
+        mJsonParser.goToChild(0); // return value = <div> node
+        mJsonParser.goToChild(0); // return value = <ul> node
+        mJsonParser.goToChild(0); // return value = <li> node
+        mJsonParser.goToChild(1); // return value = <p> node
+
+        final String value = readAttributeValue("class");
+        if (value != null) {
+            assertTrue(value.equals("span-class-01"));
+        } else {
+            assertTrue(false);
+        }
+    }
+
+    @Test
+    public void testReadNodeMultiplicity() {
+        assertTrue(mJsonParser.isCurrentMultiple() == false);
+
+        mJsonParser.goToChild(0); // return value = <div> node
+        assertTrue(mJsonParser.isCurrentMultiple() == false);
+
+        mJsonParser.goToChild(0); // return value = <ul> node
+        assertTrue(mJsonParser.isCurrentMultiple() == false);
+
+        mJsonParser.goToChild(0); // return value = <li> node
+        assertTrue(mJsonParser.isCurrentMultiple() == false);
+
+        mJsonParser.goToChild(0); // return value = <p> node
+        assertTrue(mJsonParser.isCurrentMultiple() == true);
+    }
+
+    @Test
+    public void testReadNodeInfo() {
+        mJsonParser.goToChild(0); // return value = <div> node
+        mJsonParser.goToChild(0); // return value = <ul> node
+        mJsonParser.goToChild(0); // return value = <li> node
+        mJsonParser.goToChild(1); // return value = <p> node
+
+        final String info = readInfo();
+
+        assertTrue(info != null);
+        assertTrue(readInfo().equals("Result node with tag `span`, no id, class `span-class-01`"));
     }
 
     private String readTag() {
@@ -91,9 +171,43 @@ public class JSONResultStructParserTest {
         }
     }
 
-//    getCurrentAttributes
-//    getCurrentAttribute
-//    getCurrentAttributeValue
-//    isCurrentMultiple
-//    getCurrentInfo
+    private Map<String, JSONObject> readAttributes() {
+        try {
+            final Map<String, JSONObject> attributes = mJsonParser.getCurrentAttributes();
+            return attributes;
+        } catch (ParseException pe) {
+            MyLogger.log(Level.SEVERE, pe.getMessage());
+            return null;
+        }
+    }
+
+    private JSONObject readAttribute(String key) {
+        try {
+            final JSONObject attribute = mJsonParser.getCurrentAttribute(key);
+            return attribute;
+        } catch (ParseException pe) {
+            MyLogger.log(Level.SEVERE, pe.getMessage());
+            return null;
+        }
+    }
+
+    private String readAttributeValue(String key) {
+        try {
+            final String value = mJsonParser.getCurrentAttributeValue(key);
+            return value;
+        } catch (ParseException pe) {
+            MyLogger.log(Level.SEVERE, pe.getMessage());
+            return null;
+        }
+    }
+
+    private String readInfo() {
+        try {
+            final String info = mJsonParser.getCurrentInfo();
+            return info;
+        } catch (ParseException pe) {
+            MyLogger.log(Level.SEVERE, pe.getMessage());
+            return null;
+        }
+    }
 }
