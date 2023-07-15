@@ -21,15 +21,19 @@
 
 package selenium.webcrawler.model.JSON;
 
+import java.io.FileReader;
 import java.util.logging.Level;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.ParseException;
 import org.junit.jupiter.api.*;
 import selenium.webcrawler.MyLogger;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class JSONResultStructParserTest {
+    private static JSONResultStructParser mJsonParser;
     @BeforeAll
     static void beforeAll() {
-        System.out.println("WebDriverTest: before all test methods");
+        System.out.println("JSONResultStructParserTest: before all test methods");
 
         // Optional. If not specified, java.org.openqa.selenium.webcrawler.WebDriverTest searches the PATH for
         // chromedriver.
@@ -37,31 +41,56 @@ public class JSONResultStructParserTest {
             "/Volumes/portable-ssd/Web_Development/_J/chromedriver_mac64/chromedriver");
 
         MyLogger.setLevel(Level.FINER);
+
+        // Parse the JSON file
+        final String structFilePath = "json/struct_description_simple.json";
+        try (var reader = new FileReader(ClassLoader.getSystemResource(structFilePath).getFile())) {
+            mJsonParser = new JSONResultStructParser();
+            mJsonParser.init(reader);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
     }
 
     @BeforeEach
     void beforeEach() {
-        System.out.println("WebDriverTest: before each test method");
+        System.out.println("JSONResultStructParserTest: before each test method");
     }
 
     @AfterEach
     void afterEach() {
-        System.out.println("WebDriverTest: after each test method");
+        System.out.println("JSONResultStructParserTest: after each test method");
     }
 
     @AfterAll
     static void afterAll() {
-        System.out.println("WebDriverTest: after all test methods");
+        System.out.println("JSONResultStructParserTest: after all test methods");
     }
 
     @Test
-    public void testStartFrom() {
-        assertTrue(true);
+    public void testReadTags() {
+        MyLogger.log(Level.INFO, readTag());
+        assertTrue(readTag().equals("div"));
+
+        final JSONObject parent = mJsonParser.goToChild(0);
+        MyLogger.log(Level.INFO, readTag());
+        assertTrue(readTag().equals("ul"));
+
+        mJsonParser.startFrom(parent);
+        MyLogger.log(Level.INFO, readTag());
+        assertTrue(readTag().equals("div"));
     }
 
-//    startFrom
-//    goToChild
-//    getCurrentTag
+    private String readTag() {
+        try {
+            final String tag = mJsonParser.getCurrentTag();
+            return tag;
+        } catch (ParseException pe) {
+            MyLogger.log(Level.SEVERE, pe.getMessage());
+            return null;
+        }
+    }
+
 //    getCurrentAttributes
 //    getCurrentAttribute
 //    getCurrentAttributeValue

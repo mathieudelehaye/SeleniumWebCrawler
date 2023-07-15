@@ -74,7 +74,7 @@ public class JSONResultStructParser extends JSONParser {
         }
 
         final Iterator attribute = childrenArray.iterator();
-        JSONObject innerObj = (JSONObject)attribute.next();
+        var innerObj = (JSONObject)attribute.next();
 
         for (int i = 0; i < index; i++) {
             if (attribute.hasNext()) {
@@ -103,10 +103,6 @@ public class JSONResultStructParser extends JSONParser {
     }
 
     public String getCurrentTag() throws ParseException {
-        if (!mCurrentTag.equals("")) {
-            return mCurrentTag;
-        }
-
         final var tag = (String) mCurrent.get("tag");
 
         if (tag == null) {
