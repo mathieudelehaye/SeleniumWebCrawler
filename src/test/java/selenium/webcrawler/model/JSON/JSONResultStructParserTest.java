@@ -36,7 +36,7 @@ public class JSONResultStructParserTest {
     static void beforeAll() {
         System.out.println("JSONResultStructParserTest: before all test methods");
 
-        // Optional. If not specified, java.org.openqa.selenium.webcrawler.WebDriverTest searches the PATH for
+        // Optional. If not specified, JSONResultStructParser searches the PATH for
         // chromedriver.
         System.setProperty("webdriver.chrome.driver",
             "/Volumes/portable-ssd/Web_Development/_J/chromedriver_mac64/chromedriver");
