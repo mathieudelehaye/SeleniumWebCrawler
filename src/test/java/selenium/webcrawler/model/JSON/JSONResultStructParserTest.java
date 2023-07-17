@@ -132,6 +132,31 @@ public class JSONResultStructParserTest {
     }
 
     @Test
+    public void testReadNodeValues() {
+        assertTrue(mJsonParser.getCurrentValue().equals(""));
+
+        mJsonParser.goToChild(0); // return value = <div> node
+        assertTrue(mJsonParser.getCurrentValue().equals(""));
+
+        mJsonParser.goToChild(0); // return value = <ul> node
+        assertTrue(mJsonParser.getCurrentValue().equals(""));
+
+        mJsonParser.goToChild(0); // return value = <li> node
+        assertTrue(mJsonParser.getCurrentValue().equals(""));
+
+        final JSONObject parent = mJsonParser.goToChild(0); // return value = <p> node
+        assertTrue(mJsonParser.getCurrentValue().equals("$content_tiktle"));
+
+        mJsonParser.startFrom(parent);
+        mJsonParser.goToChild(1); // return value = <p> node
+        assertTrue(mJsonParser.getCurrentValue().equals("$content_description"));
+
+        mJsonParser.startFrom(parent);
+        mJsonParser.goToChild(2); // return value = <p> node
+        assertTrue(mJsonParser.getCurrentValue().equals(""));
+    }
+
+    @Test
     public void testReadNodeMultiplicity() {
         assertTrue(mJsonParser.isCurrentMultiple() == false);
 

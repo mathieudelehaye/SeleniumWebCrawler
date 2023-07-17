@@ -21,12 +21,6 @@
 
 package selenium.webcrawler.templates;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.UUID;
-import java.util.logging.Level;
-
 public class Helpers {
     public static void sleep(long timeInMSec) {
         try {
@@ -34,26 +28,5 @@ public class Helpers {
         } catch (InterruptedException ie) {
             System.out.println(ie);
         }
-    }
-
-    public static String getUUID(String seed) {
-        try {
-            MessageDigest md = MessageDigest.getInstance("SHA-1");
-            final byte[] hash = md.digest(seed.getBytes(StandardCharsets.UTF_8));
-            return UUID.nameUUIDFromBytes(hash).toString();
-        } catch (NoSuchAlgorithmException nsae) {
-            MyLogger.log(Level.WARNING, "Cannot provide a result digest: " + nsae);
-            return "";
-        }
-    }
-
-    public static String generateIndent(int level) {
-        // Build the indent tab prefix for the provided nesting level
-        final var indentBuilder = new StringBuilder();
-        for(int i = 0; i < level; i++) {
-            indentBuilder.append("  ");
-        }
-
-        return indentBuilder.toString();
     }
 }

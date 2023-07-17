@@ -39,6 +39,7 @@ public class JSONResultStructParser extends JSONParser {
     private String mCurrentTag;
     private Map<String, JSONObject> mCurrentAttributes;
     private Map<String, String> mCurrentAttributeValues;
+    private String mCurrentValue;
     private boolean mIsCurrentMultiple;
     private String mCurrentInfo;
 
@@ -195,8 +196,18 @@ public class JSONResultStructParser extends JSONParser {
         }
     }
 
+    public String getCurrentValue() {
+        final Object value = mCurrent.get("value");
+
+        // TODO: cover the case where value is a nested struct rather than a String
+        mCurrentValue = ((value instanceof String))?
+            (String)value : "";
+
+        return mCurrentValue;
+    }
+
     public boolean isCurrentMultiple() {
-        var multiple = (Boolean) mCurrent.get("isMultiple");
+        final var multiple = (Boolean) mCurrent.get("isMultiple");
         mIsCurrentMultiple = (multiple != null && multiple == true);
         return mIsCurrentMultiple;
     }
