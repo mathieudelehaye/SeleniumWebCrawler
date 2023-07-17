@@ -48,14 +48,15 @@
                     },
                     {
                       "tag": "span",
-                      "value": "$city",
+                      "value": "$point_city",
                       "isMultiple": true
                     }
                   ]
                 }
               ]
             }
-          ]
+          ],
+          "isMultiple": true
         }
       ]
     }

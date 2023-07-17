@@ -30,6 +30,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import org.openqa.selenium.WebElement;
 import selenium.webcrawler.templates.MyLogger;
 
 public class JSONResultStructParser extends JSONParser {
@@ -64,6 +65,18 @@ public class JSONResultStructParser extends JSONParser {
 
     public void startFrom(JSONObject node) {
         mCurrent = node;
+    }
+
+    public int childrenNumber() {
+        var childrenArray = (JSONArray) mCurrent.get("children");
+        if (childrenArray == null) {
+            MyLogger.log(Level.FINE, "Current JSON object has no `children` field, while trying to " +
+                "get their number");
+
+            return 0;
+        }
+
+        return childrenArray.size();
     }
 
     public JSONObject goToChild(int index) {
@@ -101,6 +114,39 @@ public class JSONResultStructParser extends JSONParser {
         }
 
         return null;
+    }
+
+    public Boolean isCurrentlyMatching(WebElement element) {
+        // Check if the provided DOM element is matching the current JSON node
+
+        Boolean res = true;
+
+        final String dOMNodeTag = element.getTagName();
+        final String dOMNodeClass = element.getAttribute("class");
+        final String dOMNodeId = element.getAttribute("id");
+
+        try {
+            final String jSONNodeTag = getCurrentTag();
+            final String jSONNodeClass = getCurrentAttributeValue("class");
+            final String jSONNodeId = getCurrentAttributeValue("id");
+
+            if (dOMNodeTag != null && jSONNodeTag != null && !dOMNodeTag.equals(jSONNodeTag)) {
+                res = false;
+            }
+
+            if (res && dOMNodeClass != null && jSONNodeClass != null && !dOMNodeClass.equals(jSONNodeClass)) {
+                res = false;
+            }
+
+            if (res && dOMNodeId != null && jSONNodeId != null && !dOMNodeId.equals(jSONNodeId)) {
+                res = false;
+            }
+        } catch (ParseException pe) {
+            MyLogger.log(Level.SEVERE, "Error while trying to match the JSON and DOM nodes: "
+                + pe.getMessage());
+        }
+
+        return res;
     }
 
     public String getCurrentTag() throws ParseException {

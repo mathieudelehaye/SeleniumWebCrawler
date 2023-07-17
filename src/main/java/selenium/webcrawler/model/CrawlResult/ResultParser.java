@@ -22,6 +22,7 @@
 package selenium.webcrawler.model.CrawlResult;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import org.json.simple.JSONObject;
@@ -56,17 +57,24 @@ public class ResultParser {
                     + "right tag name: " + topElem.getTagName() + " found instead of " + expectedTopElemTag + " expected");
             }
 
-            parse(topElem, "/" + expectedTopElemTag);
+            parse(topElem, "/" + expectedTopElemTag, 0);
         } catch (ParseException pe) {
             throw new Exception("Exception while parsing the search result: " + pe);
         }
     }
 
-    private void parse(WebElement element, String path) throws ParseException {
+    private void parse(WebElement element, String path, int elementIndex) throws ParseException {
         MyLogger.log(Level.FINER, "Parsing: " + path);
 
         try {
             MyLogger.log(Level.FINE, mStructParser.getCurrentInfo() + " was read from JSON");
+
+            // Check element multiplicity
+            final Boolean isMultiple = mStructParser.isCurrentMultiple();
+
+            // Possibly update the path for multiple elements
+            final String elementPath = isMultiple ?
+                (path + "/" + elementIndex) : path;
 
             // Check the element tag
             if (!element.getTagName().equals(mStructParser.getCurrentTag())) {
@@ -94,9 +102,9 @@ public class ResultParser {
                 }
 
                 if (expectedAttributeValue.charAt(0) == '$') {
-                    // Store the DOM attribute value with the key: `<path> + "/" + <JSON attribute value without "$">`
+                    // Store the DOM attribute value with the key: `<elementPath> + "/" + <JSON attribute value without "$">`
                     final String storingKey = expectedAttributeValue.substring(1);
-                    mResults.put(path + "/" + storingKey, elementAttributeValue);
+                    mResults.put(elementPath + "/" + storingKey, elementAttributeValue);
                 } else {
                     // Check if (<DOM attribute value> == <JSON attribute value>)
 
@@ -109,11 +117,11 @@ public class ResultParser {
             // Store the element value
             final String expectedValue = mStructParser.getCurrentValue();
             if (!expectedValue.equals("") && expectedValue.charAt(0) == '$') {
-                // Store the DOM value with the key: `<path> + "/" + <JSON value without "$">`
+                // Store the DOM value with the key: `<elementPath> + "/" + <JSON value without "$">`
                 final String storingKey = expectedValue.substring(1);
                 final String elementValue = element.getText();
 
-                mResults.put(path + "/" + storingKey,
+                mResults.put(elementPath + "/" + storingKey,
                     (elementValue != null) ?
                     elementValue : ""
                 );
@@ -121,23 +129,55 @@ public class ResultParser {
 
             MyLogger.log(Level.FINER, "Current result: \n" + getResultDigest());
 
-            // Parse the child elements
-            int i = 0;
-            while (true) {
-                JSONObject parentNode = mStructParser.goToChild(i);
-                if (parentNode == null) {
-                    break;
+            // Walk the child elements depth-first. 
+            int jSONNodeChildIndex = 0, dOMNodeChildIndex = 0;
+            
+            final List<WebElement> dOMNodeChildren = element.findElements(By.xpath("./child::*"));
+            
+            final int jSONNodeChildrenNumber = mStructParser.childrenNumber(); 
+            final int dOMNodeChildrenNumber = dOMNodeChildren.size();
+            
+            // Check if: (jSONNodeChildrenNumber <= dOMNodeChildrenNumber)
+            if (jSONNodeChildrenNumber > dOMNodeChildrenNumber) {
+                throw new ParseException(0, "JSON node cannot have more children than the related DOM node");
+            }
+
+            while (dOMNodeChildIndex < dOMNodeChildrenNumber) {
+                JSONObject parentNode = mStructParser.goToChild(jSONNodeChildIndex);
+
+                final WebElement dOMNodeChild = dOMNodeChildren.get(dOMNodeChildIndex);
+
+                // Try to match the DOM node with the current or next JSON node
+                if (!mStructParser.isCurrentlyMatching(dOMNodeChild)) {
+                    final String previousJSONNOdeInfo = mStructParser.getCurrentInfo();
+
+                    mStructParser.startFrom(parentNode);
+                    parentNode = mStructParser.goToChild(++jSONNodeChildIndex);
+
+                    if (!mStructParser.isCurrentlyMatching(dOMNodeChild)) {
+                        MyLogger.log(Level.WARNING,
+                            "Cannot match the DOM child node with " +
+                                "tag: " + dOMNodeChild.getTagName() +
+                                ", class: " + dOMNodeChild.getAttribute("class") +
+                                ", id: " + dOMNodeChild.getAttribute("id") +
+                                ", neither with the previous JSON child node: " + previousJSONNOdeInfo +
+                                ", nor with the next JSON child node: " + mStructParser.getCurrentInfo() +
+                                ". Stop parsing the DOM node children."
+                        );
+
+                        break;
+                    }
                 }
 
-                WebElement child = element.findElements(By.xpath("./child::*")).get(i);
+                parse(dOMNodeChild, elementPath + "/" + mStructParser.getCurrentTag(), dOMNodeChildIndex);
 
-                parse(child, path + "/" + mStructParser.getCurrentTag());
-
-                i++;
                 mStructParser.startFrom(parentNode);
+
+                dOMNodeChildIndex++;
             }
         } catch (ParseException e) {
-            throw new ParseException(0, "Exception while parsing the result node at path `" + path + "`: " + e);
+            throw new ParseException(0, "Exception while parsing the result node at path `" + path 
+                + "` and elementIndex `" + elementIndex + "`: " + e);
         }
     }
 

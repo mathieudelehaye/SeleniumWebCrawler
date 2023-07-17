@@ -71,8 +71,10 @@ public class JSONResultStructParserTest {
     @Test
     public void testReadNodeTags() {
         assertTrue(readTag().equals("div"));
+        assertTrue(mJsonParser.childrenNumber() == 1);
 
         final JSONObject parent = mJsonParser.goToChild(0);
+        assertTrue(mJsonParser.childrenNumber() == 1);
         assertTrue(readTag().equals("ul"));
 
         mJsonParser.startFrom(parent);
