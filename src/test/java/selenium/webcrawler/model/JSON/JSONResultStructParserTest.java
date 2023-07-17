@@ -145,7 +145,7 @@ public class JSONResultStructParserTest {
         assertTrue(mJsonParser.getCurrentValue().equals(""));
 
         final JSONObject parent = mJsonParser.goToChild(0); // return value = <p> node
-        assertTrue(mJsonParser.getCurrentValue().equals("$content_tiktle"));
+        assertTrue(mJsonParser.getCurrentValue().equals("$content_title"));
 
         mJsonParser.startFrom(parent);
         mJsonParser.goToChild(1); // return value = <p> node
