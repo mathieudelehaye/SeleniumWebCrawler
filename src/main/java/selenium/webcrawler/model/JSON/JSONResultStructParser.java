@@ -223,7 +223,7 @@ public class JSONResultStructParser extends JSONParser {
             final String elemClass = getCurrentAttributeValue("class");
             final boolean multiple = isCurrentMultiple();
 
-            final String info = String.format("Result node with tag `%s`, %s, %s%s",
+            final String info = String.format("Expected node with tag `%s`, %s, %s%s",
                 tag,
                 !id.equals("") ? ("id `" + id + "`") : "no id",
                 !elemClass.equals("") ? ("class `" + elemClass + "`") : "no class",

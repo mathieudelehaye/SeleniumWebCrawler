@@ -15,7 +15,7 @@
           "attributes": [
             {
               "key": "data-store-id",
-              "value": "$key_seed"
+              "value": "$point_id"
             }
           ],
           "children": [
@@ -43,7 +43,7 @@
                           "value": "wpsl-street"
                         }
                       ],
-                      "value": "$address",
+                      "value": "$point_address",
                       "isMultiple": true
                     },
                     {

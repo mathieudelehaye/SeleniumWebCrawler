@@ -183,7 +183,7 @@ public class JSONResultStructParserTest {
         final String info = readInfo();
 
         assertTrue(info != null);
-        assertTrue(readInfo().equals("Result node with tag `span`, no id, class `span-class-01`"));
+        assertTrue(readInfo().equals("Expected node with tag `span`, no id, class `span-class-01`"));
     }
 
     private String readTag() {

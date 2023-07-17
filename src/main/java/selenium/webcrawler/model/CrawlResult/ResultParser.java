@@ -21,6 +21,7 @@
 
 package selenium.webcrawler.model.CrawlResult;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 import org.json.simple.JSONObject;
@@ -34,79 +35,91 @@ import selenium.webcrawler.model.JSON.JSONResultStructParser;
 public class ResultParser {
     private WebDriver mDriver;
     private JSONResultStructParser mStructParser;
-    private ResultMap mResults = new ResultMap();
-
-    // TODO: remove and parse it from the JSON struct file
-    final String resultIdAttribute = "data-store-id";
-    final String resultDivClass = "wpsl-store-location";
-    final String resultAddressSpanClass = "wpsl-street";
+    private HashMap<String, String> mResults = new HashMap<>();
 
     public ResultParser(WebDriver driver, JSONResultStructParser structure) throws Exception {
         mDriver = driver;
         mStructParser = structure;
 
         try {
-            // The root element needs to be identified by its id attribute
-            final String topElemTag = mStructParser.getCurrentTag();
-            final String topElemId = mStructParser.getCurrentAttributeValue("id");
+            // The root element must be identified by its id attribute
+            final String expectedTopElemTag = mStructParser.getCurrentTag();
+            final String expectedTopElemId = mStructParser.getCurrentAttributeValue("id");
 
-            if (topElemId.equals("")) {
-                throw new Exception("The JSON top object doesn't have any id attribute");
+            if (expectedTopElemId.equals("")) {
+                throw new ParseException(0, "The JSON top object doesn't have any id attribute");
             }
 
-            final WebElement topElem = mDriver.findElement(By.id(topElemId));
-            if (!topElem.getTagName().equals(topElemTag)) {
+            final WebElement topElem = mDriver.findElement(By.id(expectedTopElemId));
+            if (!topElem.getTagName().equals(expectedTopElemTag)) {
                 throw new ParseException(0, "The element found in the DOM, with the provided id, doesn't have the "
-                    + "right tag name: " + topElem.getTagName() + " found instead of " + topElemTag + " expected");
+                    + "right tag name: " + topElem.getTagName() + " found instead of " + expectedTopElemTag + " expected");
             }
 
-            parse(topElem);
-        } catch (Exception e) {
-            throw new Exception("Exception while parsing the search result: " + e);
+            parse(topElem, "/" + expectedTopElemTag);
+        } catch (ParseException pe) {
+            throw new Exception("Exception while parsing the search result: " + pe);
         }
     }
 
-    private void parse(WebElement elem) throws Exception {
+    private void parse(WebElement element, String path) throws ParseException {
+        MyLogger.log(Level.FINER, "Parsing: " + path);
 
         try {
             MyLogger.log(Level.FINE, mStructParser.getCurrentInfo() + " was read from JSON");
 
-            // Check if the tag of the DOM child element matches the current JSON node
-            if (!elem.getTagName().equals(mStructParser.getCurrentTag())) {
-                throw new Exception("The child DOM element doesn't have the right tag name: "
-                    + elem.getTagName() + " found instead of " + mStructParser.getCurrentTag() + " expected");
+            // Check the element tag
+            if (!element.getTagName().equals(mStructParser.getCurrentTag())) {
+                throw new ParseException(0, "The child DOM element doesn't have the right tag name: "
+                    + element.getTagName() + " found instead of " + mStructParser.getCurrentTag() + " expected");
             }
 
-            // If the tag is `ul`, add a nesting level
-            if (mStructParser.getCurrentTag().equals("ul")) {
-                mResults.increaseNesting("ul");
-            }
+            // Store or check the element attributes if any
+            Map<String, JSONObject> expectedAttributes = mStructParser.getCurrentAttributes();
 
-            // Check the element attributes if any
-            Map<String, JSONObject> attributes = mStructParser.getCurrentAttributes();
-
-            for (JSONObject attribute: attributes.values()) {
-                final var attributeValue = (String)attribute.get("value");
-
-                if (attributeValue == null) {
-                    throw new Exception("JSON node attribute has no value");
+            for (JSONObject expectedAttribute: expectedAttributes.values()) {
+                final var expectedAttributeKey = (String)expectedAttribute.get("key");
+                if (expectedAttributeKey == null || expectedAttributeKey.equals("")) {
+                    throw new ParseException(0, "JSON node attribute has no key");
                 }
 
-                if (attributeValue.charAt(0) == '$') {
-                    final String attributeKey = (String)attribute.get("key");
+                final var expectedAttributeValue = (String)expectedAttribute.get("value");
+                if (expectedAttributeValue == null || expectedAttributeValue.equals("")) {
+                    throw new ParseException(0, "JSON node attribute has no value");
+                }
 
-                    if (attributeKey == null) {
-                        throw new Exception("JSON node attribute has no key");
-                    }
+                final String elementAttributeValue = element.getAttribute(expectedAttributeKey);
+                if (elementAttributeValue == null || elementAttributeValue.equals("")) {
+                    throw new ParseException(0, "DOM node attribute has no value");
+                }
 
-                    final String elemAttributeValue = elem.getAttribute(attributeKey);
-                    if (elem.getAttribute(attributeKey) != null) {
-                        mResults.put(attributeKey, elemAttributeValue);
+                if (expectedAttributeValue.charAt(0) == '$') {
+                    // Store the DOM attribute value with the key: `<path> + "/" + <JSON attribute value without "$">`
+                    final String storingKey = expectedAttributeValue.substring(1);
+                    mResults.put(path + "/" + storingKey, elementAttributeValue);
+                } else {
+                    // Check if (<DOM attribute value> == <JSON attribute value>)
+
+                    if (!expectedAttributeValue.equals(elementAttributeValue)) {
+                        throw new ParseException(0, "JSON and DOM nodes have different attribute values");
                     }
                 }
             }
 
-            MyLogger.log(Level.FINER, "Current result: " + mResults.getDigest(false));
+            // Store the element value
+            final String expectedValue = mStructParser.getCurrentValue();
+            if (!expectedValue.equals("") && expectedValue.charAt(0) == '$') {
+                // Store the DOM value with the key: `<path> + "/" + <JSON value without "$">`
+                final String storingKey = expectedValue.substring(1);
+                final String elementValue = element.getText();
+
+                mResults.put(path + "/" + storingKey,
+                    (elementValue != null) ?
+                    elementValue : ""
+                );
+            }
+
+            MyLogger.log(Level.FINER, "Current result: \n" + getResultDigest());
 
             // Parse the child elements
             int i = 0;
@@ -116,15 +129,25 @@ public class ResultParser {
                     break;
                 }
 
-                WebElement child = elem.findElements(By.xpath("./child::*")).get(i);
+                WebElement child = element.findElements(By.xpath("./child::*")).get(i);
 
-                parse(child);
+                parse(child, path + "/" + mStructParser.getCurrentTag());
 
                 i++;
                 mStructParser.startFrom(parentNode);
             }
         } catch (ParseException e) {
-            throw new Exception("Exception while parsing the search result: " + e);
+            throw new ParseException(0, "Exception while parsing the result node at path `" + path + "`: " + e);
         }
+    }
+
+    private String getResultDigest() {
+        StringBuilder res = new StringBuilder();
+
+        for (String key: mResults.keySet()) {
+            res.append(key + ": " + mResults.get(key) + "\n");
+        }
+
+        return res.toString();
     }
 }
