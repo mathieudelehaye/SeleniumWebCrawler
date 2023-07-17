@@ -34,7 +34,7 @@
               "children": [
                 {
                   "tag": "strong",
-                  "value": "$content-title",
+                  "value": "$content_title",
                   "isMultiple": true
                 },
                 {
@@ -45,7 +45,7 @@
                       "value": "span-class-01"
                     }
                   ],
-                  "value": "$content-description"
+                  "value": "$content_description"
                 },
                 {
                   "tag": "span",

@@ -28,7 +28,7 @@ import org.json.simple.parser.ParseException;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
-import selenium.webcrawler.MyLogger;
+import selenium.webcrawler.templates.MyLogger;
 import selenium.webcrawler.model.JSON.JSONResultStructParser;
 
 public class ResultParser {
@@ -79,7 +79,7 @@ public class ResultParser {
 
             // If the tag is `ul`, add a nesting level
             if (mStructParser.getCurrentTag().equals("ul")) {
-                mResults.increaseNesting();
+                mResults.increaseNesting("ul");
             }
 
             // Check the element attributes if any
@@ -106,7 +106,7 @@ public class ResultParser {
                 }
             }
 
-            MyLogger.log(Level.FINER, "Current result: " + mResults.getDigest());
+            MyLogger.log(Level.FINER, "Current result: " + mResults.getDigest(false));
 
             // Parse the child elements
             int i = 0;

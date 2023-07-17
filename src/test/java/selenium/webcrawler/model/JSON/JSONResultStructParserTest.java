@@ -27,7 +27,7 @@ import java.util.logging.Level;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
 import org.junit.jupiter.api.*;
-import selenium.webcrawler.MyLogger;
+import selenium.webcrawler.templates.MyLogger;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class JSONResultStructParserTest {

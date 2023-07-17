@@ -21,37 +21,67 @@
 
 package selenium.webcrawler.model.CrawlResult;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
-import selenium.webcrawler.MyLogger;
+import selenium.webcrawler.templates.Helpers;
+import selenium.webcrawler.templates.MyLogger;
 
-public class ResultMap extends HashMap<String, Object> {
+public class ResultMap {
+    private Map<String, Object> mStart;
     private Map<String, Object> mCurrentNestedMap;
 
     ResultMap() {
-        super();
-        mCurrentNestedMap = this;
+        mStart = new HashMap<>();
+        mCurrentNestedMap = mStart;
     }
 
     public void put(String key, String value) {
         mCurrentNestedMap.put(key, value);
     }
 
-    public void increaseNesting() {
+    public Map<String, Object> increaseNesting(String childKeySeed) {
+        final String uUID = Helpers.getUUID(childKeySeed);
+
         var nestedMap = new HashMap<String, Object>();
-        // TODO: use a random key instead, as there can me sibling children
-        mCurrentNestedMap.put("child", nestedMap);
+        // TODO: use a random key instead, as there can be sibling children
+        mCurrentNestedMap.put(uUID, nestedMap);
+
+        // Return the parent, so we can change the current node back to it
+        Map<String, Object> res = mCurrentNestedMap;
+
         mCurrentNestedMap = nestedMap;
+
+        return res;
     }
 
-    public String getDigest() {
+    public void changeNodeTo(Map<String, Object> node) {
+        mCurrentNestedMap = node;
+    }
 
+    public String find(String key, Boolean fromRoot) {
+        String res = null;
+
+        try {
+            res = searchFrom(fromRoot ? mStart : mCurrentNestedMap, key, 0, new StringBuilder());
+        } catch (Exception e) {
+            MyLogger.log(Level.WARNING, "Cannot provide a result digest: " + e);
+        }
+
+        return res;
+    }
+
+    public String getDigest(Boolean fromRoot) {
         try {
             var tmp = new StringBuilder();
             tmp.append("\n");
-            parseFrom(this, 0, tmp);
+
+            // No key is searched
+            final String searchedKey = "";
+
+            searchFrom(fromRoot ? mStart : mCurrentNestedMap, searchedKey, 0, tmp);
 
             // Remove the last newline character and return the digest
             return tmp.substring(0, tmp.length() - 1);
@@ -61,32 +91,50 @@ public class ResultMap extends HashMap<String, Object> {
         }
     }
 
-    private void parseFrom(Map<String, Object> start, int nesting, StringBuilder digest) throws Exception {
-        // Build the indent tab prefix for the current nesting level
-        final var indentBuilder = new StringBuilder();
-        for(int i = 0; i < nesting; i++) {
-            indentBuilder.append("  ");
-        }
-        final String indent = indentBuilder.toString();
+    private String searchFrom(Map<String, Object> startNode, String searchedKey, int startNesting, StringBuilder output) throws Exception {
+        Set<String> keys = startNode.keySet();
+        ArrayList<Map<String, Object>> nodesToSearch = new ArrayList<>();
 
-        Set<String> keys = start.keySet();
-
+        // Breadth-first search:
         for(String key: keys) {
-            Object value = start.get(key);
+            // If we found the key, just return the value
+            if (searchedKey != null &&
+                !searchedKey.equals("") &&
+                key.equals(searchedKey)) {
+
+                output.setLength(0);
+                output.append(startNode.get(key));
+                return output.toString();
+            }
+
+            // Otherwise, print the data
+            Object value = startNode.get(key);
 
             if (value instanceof String) {
-                digest.append(indent + key + ": " + value + "\n");
+                output.append(Helpers.generateIndent(startNesting) + key + ": " + value + "\n");
             } else {
                 // TODO: improve the way we detect the Object type
-                Map<String, Object> mapValue;
-
                 try {
-                    mapValue = (Map<String, Object>) start.get(key);
-                    parseFrom(mapValue, ++nesting, digest);
+                    nodesToSearch.add((Map<String, Object>) value);
                 } catch (Exception e) {
                     throw new Exception("Result map contains a value which isn't a String or another map");
                 }
             }
         }
+
+        // Search the child nodes
+        for (Map<String, Object> node : nodesToSearch) {
+            final var res = searchFrom(node, searchedKey, ++startNesting, output);
+
+            // If a key was found, return straightforward
+            if (!res.equals("") &&
+                searchedKey != null &&
+                !searchedKey.equals("")) {
+
+                return res;
+            }
+        }
+
+        return "";
     }
 }

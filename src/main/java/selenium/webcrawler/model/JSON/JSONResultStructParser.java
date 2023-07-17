@@ -30,7 +30,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-import selenium.webcrawler.MyLogger;
+import selenium.webcrawler.templates.MyLogger;
 
 public class JSONResultStructParser extends JSONParser {
     private JSONObject mRoot;

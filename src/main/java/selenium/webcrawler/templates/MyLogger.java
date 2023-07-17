@@ -19,7 +19,7 @@
 //  You should have received a copy of the GNU Affero General Public License along with this program. If not, see
 //  <https://www.gnu.org/licenses/>.ses/>.
 
-package selenium.webcrawler;
+package selenium.webcrawler.templates;
 
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Handler;
