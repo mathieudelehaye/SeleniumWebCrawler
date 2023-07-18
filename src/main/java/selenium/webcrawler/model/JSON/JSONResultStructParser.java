@@ -34,41 +34,72 @@ import org.openqa.selenium.WebElement;
 import selenium.webcrawler.templates.MyLogger;
 
 public class JSONResultStructParser extends JSONParser {
-    private JSONObject mRoot;
-    private JSONObject mCurrent;
-    // Cache data
-    private String mCurrentTag;
-    private Map<String, JSONObject> mCurrentAttributes;
-    private Map<String, String> mCurrentAttributeValues;
-    private String mCurrentValue;
-    private boolean mIsCurrentMultiple;
-    private String mCurrentInfo;
+    public class State implements Cloneable {
+        public JSONObject mRoot;
+        public JSONObject mCurrent;
+        public boolean mCurrentMatched = false;
 
-    public JSONResultStructParser() {
-        mCurrentTag = "";
-        mCurrentAttributes = new HashMap<>();
-        mCurrentAttributeValues = new HashMap<>();
-        mIsCurrentMultiple = false;
-        mCurrentInfo = "";
+        @Override
+        public Object clone() throws CloneNotSupportedException {
+            return super.clone();
+        }
+
+        // TODO: implement getters-setters and make the properties private
     }
+
+    private class Cache {
+        public String mCurrentTag;
+        public Map<String, JSONObject> mCurrentAttributes;
+        public Map<String, String> mCurrentAttributeValues;
+        public String mCurrentValue;
+        public boolean mIsCurrentMultiple;
+        public String mCurrentInfo;
+
+        Cache() {
+            reset();
+        }
+
+        // TODO: implement getters-setters and make the properties private
+
+        public void reset() {
+            mCurrentTag = "";
+            mCurrentAttributes = new HashMap<>();
+            mCurrentAttributeValues = new HashMap<>();
+            mCurrentValue = "";
+            mIsCurrentMultiple = false;
+            mCurrentInfo = "";
+        }
+    }
+
+    private State mState = new State();
+    private Cache mCache = new Cache();
 
     public JSONObject init(FileReader reader) throws ParseException {
         try {
-            mRoot = (JSONObject) super.parse(reader);
-            mCurrent = mRoot;
+            mState.mRoot = (JSONObject) super.parse(reader);
+            mState.mCurrent = mState.mRoot;
         } catch (Exception e) {
             throw new ParseException(0, "Error while parsing the file reader: " + e);
         }
 
-        return mRoot;
+        return mState.mRoot;
     }
 
-    public void startFrom(JSONObject node) {
-        mCurrent = node;
+    public State saveState() {
+        try {
+            return (State) mState.clone();
+        } catch (CloneNotSupportedException cnse) {
+            MyLogger.log(Level.SEVERE, "Error while saving the JSON parser state: " + cnse.getMessage());
+            return null;
+        }
+    }
+
+    public void restoreState(State state) {
+        mState = state;
     }
 
     public int childrenNumber() {
-        var childrenArray = (JSONArray) mCurrent.get("children");
+        var childrenArray = (JSONArray) mState.mCurrent.get("children");
         if (childrenArray == null) {
             MyLogger.log(Level.FINE, "Current JSON object has no `children` field, while trying to " +
                 "get their number");
@@ -79,12 +110,17 @@ public class JSONResultStructParser extends JSONParser {
         return childrenArray.size();
     }
 
-    public JSONObject goToChild(int index) {
-        var childrenArray = (JSONArray) mCurrent.get("children");
+    public void goToChild(int index) {
+        if (mState.mCurrent == null) {
+            MyLogger.log(Level.WARNING, "Cannot go to the child of a null pointer");
+            return;
+        }
+
+        var childrenArray = (JSONArray) mState.mCurrent.get("children");
 
         if (childrenArray == null) {
             MyLogger.log(Level.FINE, "Current JSON object has no `children` field, while trying to read it");
-            return null;
+            return;
         }
 
         final Iterator attribute = childrenArray.iterator();
@@ -94,32 +130,22 @@ public class JSONResultStructParser extends JSONParser {
             if (attribute.hasNext()) {
                 innerObj = (JSONObject)attribute.next();
             } else {
-                return null;
+                return;
             }
         }
 
         if (innerObj != null) {
-            JSONObject parent = mCurrent;
-            mCurrent = innerObj;
+            mState.mCurrent = innerObj;
 
-            // Reset the cache data for the child node
-            mCurrentTag = "";
-            mCurrentAttributes = new HashMap<>();
-            mCurrentAttributeValues = new HashMap<>();
-            mIsCurrentMultiple = false;
-            mCurrentInfo = "";
-
-            // Return the parent node, so it can be saved by the class user.
-            return parent;
+            mState.mCurrentMatched = false;
+            mCache.reset();
         }
-
-        return null;
     }
 
     public Boolean isCurrentlyMatching(WebElement element) {
         // Check if the provided DOM element is matching the current JSON node
 
-        Boolean res = true;
+        boolean res = true;
 
         final String dOMNodeTag = element.getTagName();
         final String dOMNodeClass = element.getAttribute("class");
@@ -146,27 +172,36 @@ public class JSONResultStructParser extends JSONParser {
                 + pe.getMessage());
         }
 
-        return res;
+        mState.mCurrentMatched = res;
+        return mState.mCurrentMatched;
+    }
+
+    public boolean wasCurrentMatched() {
+        return mState.mCurrentMatched;
     }
 
     public String getCurrentTag() throws ParseException {
-        final var tag = (String) mCurrent.get("tag");
+        if (!mCache.mCurrentTag.equals("")) {
+            return mCache.mCurrentTag;
+        }
+
+        final var tag = (String) mState.mCurrent.get("tag");
 
         if (tag == null) {
             throw new ParseException(0, "Current object has no `tag` field");
         }
 
-        mCurrentTag = tag;
+        mCache.mCurrentTag = tag;
         return tag;
     }
 
     public Map<String, JSONObject> getCurrentAttributes() throws ParseException {
-        var attributeArray = (JSONArray) mCurrent.get("attributes");
+        var attributeArray = (JSONArray) mState.mCurrent.get("attributes");
 
         if (attributeArray != null) {
 
-            if (attributeArray.size() == mCurrentAttributes.size()) {
-                return mCurrentAttributes;
+            if (attributeArray.size() == mCache.mCurrentAttributes.size()) {
+                return mCache.mCurrentAttributes;
             }
 
             final Iterator attribute = attributeArray.iterator();
@@ -179,19 +214,19 @@ public class JSONResultStructParser extends JSONParser {
                     throw new ParseException(0, "Current `attributes` item has no `key` field");
                 }
 
-                mCurrentAttributes.put(attributeKey, innerObj);
+                mCache.mCurrentAttributes.put(attributeKey, innerObj);
             }
         }
 
-        return mCurrentAttributes;
+        return mCache.mCurrentAttributes;
     }
 
     public JSONObject getCurrentAttribute(String key) throws ParseException {
-        if (mCurrentAttributes.get(key) != null) {
-            return (JSONObject) mCurrentAttributes.get(key);
+        if (mCache.mCurrentAttributes.get(key) != null) {
+            return (JSONObject) mCache.mCurrentAttributes.get(key);
         }
 
-        var attributeArray = (JSONArray) mCurrent.get("attributes");
+        var attributeArray = (JSONArray) mState.mCurrent.get("attributes");
 
         if (attributeArray == null) {
             //MyLogger.log(Level.FINE, "Current JSON object has no `attributes` field, while trying to read it");
@@ -217,7 +252,7 @@ public class JSONResultStructParser extends JSONParser {
                         + "while trying to read it");
                 }
 
-                mCurrentAttributes.put(key, innerObj);
+                mCache.mCurrentAttributes.put(key, innerObj);
                 return innerObj;
             }
         }
@@ -227,15 +262,15 @@ public class JSONResultStructParser extends JSONParser {
     }
 
     public String getCurrentAttributeValue(String key) throws ParseException {
-        if (mCurrentAttributeValues.get(key) != null) {
-            return mCurrentAttributeValues.get(key);
+        if (mCache.mCurrentAttributeValues.get(key) != null) {
+            return mCache.mCurrentAttributeValues.get(key);
         }
 
         JSONObject attribute = getCurrentAttribute(key);
 
         if (attribute != null) {
             final String value = (String) attribute.get("value");
-            mCurrentAttributeValues.put(key, value);
+            mCache.mCurrentAttributeValues.put(key, value);
             return value;
         } else {
             return "";
@@ -243,24 +278,24 @@ public class JSONResultStructParser extends JSONParser {
     }
 
     public String getCurrentValue() {
-        final Object value = mCurrent.get("value");
+        final Object value = mState.mCurrent.get("value");
 
         // TODO: cover the case where value is a nested struct rather than a String
-        mCurrentValue = ((value instanceof String))?
+        mCache.mCurrentValue = ((value instanceof String))?
             (String)value : "";
 
-        return mCurrentValue;
+        return mCache.mCurrentValue;
     }
 
     public boolean isCurrentMultiple() {
-        final var multiple = (Boolean) mCurrent.get("isMultiple");
-        mIsCurrentMultiple = (multiple != null && multiple == true);
-        return mIsCurrentMultiple;
+        final var multiple = (Boolean) mState.mCurrent.get("isMultiple");
+        mCache.mIsCurrentMultiple = (multiple != null && multiple);
+        return mCache.mIsCurrentMultiple;
     }
 
     public String getCurrentInfo() throws ParseException {
-        if (!mCurrentInfo.equals("")) {
-            return mCurrentInfo;
+        if (!mCache.mCurrentInfo.equals("")) {
+            return mCache.mCurrentInfo;
         }
 
         try {
@@ -269,12 +304,12 @@ public class JSONResultStructParser extends JSONParser {
             final String elemClass = getCurrentAttributeValue("class");
             final boolean multiple = isCurrentMultiple();
 
-            final String info = String.format("Expected node with tag `%s`, %s, %s%s",
+            final String info = String.format("JSON node with tag `%s`, %s, %s%s",
                 tag,
                 !id.equals("") ? ("id `" + id + "`") : "no id",
                 !elemClass.equals("") ? ("class `" + elemClass + "`") : "no class",
                 multiple ? " and multiple" : "");
-            mCurrentInfo = info;
+            mCache.mCurrentInfo = info;
 
             return info;
         } catch (ParseException e) {

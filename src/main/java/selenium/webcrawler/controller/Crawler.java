@@ -33,7 +33,7 @@ import java.io.FileReader;
 import java.util.logging.Level;
 
 public class Crawler {
-    final private static int mPauseTimeInSec = 3;
+    final private static int mPauseTimeInSec = 5;
 
     public void run() throws Exception {
         // Optional. If not specified, ResultParserTest searches the PATH for

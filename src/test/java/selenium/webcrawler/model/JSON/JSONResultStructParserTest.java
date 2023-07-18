@@ -73,12 +73,27 @@ public class JSONResultStructParserTest {
         assertTrue(readTag().equals("div"));
         assertTrue(mJsonParser.childrenNumber() == 1);
 
-        final JSONObject parent = mJsonParser.goToChild(0);
+        JSONResultStructParser.State parentState = mJsonParser.saveState();
+        mJsonParser.goToChild(0);
         assertTrue(mJsonParser.childrenNumber() == 1);
         assertTrue(readTag().equals("ul"));
 
-        mJsonParser.startFrom(parent);
+        mJsonParser.restoreState(parentState);
         assertTrue(readTag().equals("div"));
+    }
+
+    @Test
+    public void testSaveAndRestoreState() {
+        final JSONResultStructParser.State parentState = mJsonParser.saveState();
+        assertTrue(parentState != null);
+
+        mJsonParser.goToChild(0);
+        final JSONResultStructParser.State childState = mJsonParser.saveState();
+        assertTrue(parentState.mCurrent.get("tag") != childState.mCurrent.get("tag"));
+
+        mJsonParser.restoreState(parentState);
+        final JSONResultStructParser.State parentState2 = mJsonParser.saveState();
+        assertTrue(parentState.mCurrent.get("tag") == parentState2.mCurrent.get("tag"));
     }
 
     @Test
@@ -146,14 +161,15 @@ public class JSONResultStructParserTest {
         mJsonParser.goToChild(0); // return value = <li> node
         assertTrue(mJsonParser.getCurrentValue().equals(""));
 
-        final JSONObject parent = mJsonParser.goToChild(0); // return value = <p> node
+        JSONResultStructParser.State parentState = mJsonParser.saveState();
+        mJsonParser.goToChild(0); // return value = <p> node
         assertTrue(mJsonParser.getCurrentValue().equals("$content_title"));
 
-        mJsonParser.startFrom(parent);
+        mJsonParser.restoreState(parentState);
         mJsonParser.goToChild(1); // return value = <p> node
         assertTrue(mJsonParser.getCurrentValue().equals("$content_description"));
 
-        mJsonParser.startFrom(parent);
+        mJsonParser.restoreState(parentState);
         mJsonParser.goToChild(2); // return value = <p> node
         assertTrue(mJsonParser.getCurrentValue().equals(""));
     }
