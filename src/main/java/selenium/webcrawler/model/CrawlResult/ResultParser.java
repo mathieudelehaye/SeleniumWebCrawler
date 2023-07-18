@@ -67,117 +67,145 @@ public class ResultParser {
         MyLogger.log(Level.FINER, "Parsing: " + path);
 
         try {
-            MyLogger.log(Level.FINE, mStructParser.getCurrentInfo() + " was read from JSON");
 
-            // Check element multiplicity
-            final Boolean isMultiple = mStructParser.isCurrentMultiple();
+            parseNode(element, path, elementIndex);
 
-            // Possibly update the path for multiple elements
-            final String elementPath = isMultiple ?
-                (path + "/" + elementIndex) : path;
+            walkChildren(element, path, elementIndex);
 
-            // Check the element tag
-            if (!element.getTagName().equals(mStructParser.getCurrentTag())) {
-                throw new ParseException(0, "The child DOM element doesn't have the right tag name: "
-                    + element.getTagName() + " found instead of " + mStructParser.getCurrentTag() + " expected");
-            }
-
-            // Store or check the element attributes if any
-            Map<String, JSONObject> expectedAttributes = mStructParser.getCurrentAttributes();
-
-            for (JSONObject expectedAttribute: expectedAttributes.values()) {
-                final var expectedAttributeKey = (String)expectedAttribute.get("key");
-                if (expectedAttributeKey == null || expectedAttributeKey.equals("")) {
-                    throw new ParseException(0, "JSON node attribute has no key");
-                }
-
-                final var expectedAttributeValue = (String)expectedAttribute.get("value");
-                if (expectedAttributeValue == null || expectedAttributeValue.equals("")) {
-                    throw new ParseException(0, "JSON node attribute has no value");
-                }
-
-                final String elementAttributeValue = element.getAttribute(expectedAttributeKey);
-                if (elementAttributeValue == null || elementAttributeValue.equals("")) {
-                    throw new ParseException(0, "DOM node attribute has no value");
-                }
-
-                if (expectedAttributeValue.charAt(0) == '$') {
-                    // Store the DOM attribute value with the key: `<elementPath> + "/" + <JSON attribute value without "$">`
-                    final String storingKey = expectedAttributeValue.substring(1);
-                    mResults.put(elementPath + "/" + storingKey, elementAttributeValue);
-                } else {
-                    // Check if (<DOM attribute value> == <JSON attribute value>)
-
-                    if (!expectedAttributeValue.equals(elementAttributeValue)) {
-                        throw new ParseException(0, "JSON and DOM nodes have different attribute values");
-                    }
-                }
-            }
-
-            // Store the element value
-            final String expectedValue = mStructParser.getCurrentValue();
-            if (!expectedValue.equals("") && expectedValue.charAt(0) == '$') {
-                // Store the DOM value with the key: `<elementPath> + "/" + <JSON value without "$">`
-                final String storingKey = expectedValue.substring(1);
-                final String elementValue = element.getText();
-
-                mResults.put(elementPath + "/" + storingKey,
-                    (elementValue != null) ?
-                    elementValue : ""
-                );
-            }
-
-            MyLogger.log(Level.FINER, "Current result: \n" + getResultDigest());
-
-            // Walk the child elements depth-first. 
-            int jSONNodeChildIndex = 0, dOMNodeChildIndex = 0;
-            
-            final List<WebElement> dOMNodeChildren = element.findElements(By.xpath("./child::*"));
-            
-            final int jSONNodeChildrenNumber = mStructParser.childrenNumber(); 
-            final int dOMNodeChildrenNumber = dOMNodeChildren.size();
-            
-            // Check if: (jSONNodeChildrenNumber <= dOMNodeChildrenNumber)
-            if (jSONNodeChildrenNumber > dOMNodeChildrenNumber) {
-                throw new ParseException(0, "JSON node cannot have more children than the related DOM node");
-            }
-
-            while (dOMNodeChildIndex < dOMNodeChildrenNumber) {
-                JSONObject parentNode = mStructParser.goToChild(jSONNodeChildIndex);
-
-                final WebElement dOMNodeChild = dOMNodeChildren.get(dOMNodeChildIndex);
-
-                // Try to match the DOM node with the current or next JSON node
-                if (!mStructParser.isCurrentlyMatching(dOMNodeChild)) {
-                    final String previousJSONNOdeInfo = mStructParser.getCurrentInfo();
-
-                    mStructParser.startFrom(parentNode);
-                    parentNode = mStructParser.goToChild(++jSONNodeChildIndex);
-
-                    if (!mStructParser.isCurrentlyMatching(dOMNodeChild)) {
-                        MyLogger.log(Level.WARNING,
-                            "Cannot match the DOM child node with " +
-                                "tag: " + dOMNodeChild.getTagName() +
-                                ", class: " + dOMNodeChild.getAttribute("class") +
-                                ", id: " + dOMNodeChild.getAttribute("id") +
-                                ", neither with the previous JSON child node: " + previousJSONNOdeInfo +
-                                ", nor with the next JSON child node: " + mStructParser.getCurrentInfo() +
-                                ". Stop parsing the DOM node children."
-                        );
-
-                        break;
-                    }
-                }
-
-                parse(dOMNodeChild, elementPath + "/" + mStructParser.getCurrentTag(), dOMNodeChildIndex);
-
-                mStructParser.startFrom(parentNode);
-
-                dOMNodeChildIndex++;
-            }
         } catch (ParseException e) {
             throw new ParseException(0, "Exception while parsing the result node at path `" + path 
                 + "` and elementIndex `" + elementIndex + "`: " + e);
+        }
+    }
+
+    private void parseNode(WebElement element, String path, int elementIndex) throws ParseException {
+        MyLogger.log(Level.FINE, mStructParser.getCurrentInfo() + " was read from JSON");
+
+        // Possibly update the path for multiple elements
+        final String elementPath = mStructParser.isCurrentMultiple() ?
+            (path + "/" + elementIndex) : path;
+
+        // Check the element tag
+        if (!element.getTagName().equals(mStructParser.getCurrentTag())) {
+            throw new ParseException(0, "The child DOM element doesn't have the right tag name: "
+                + element.getTagName() + " found instead of " + mStructParser.getCurrentTag() + " expected");
+        }
+
+        // Store or check the element attributes if any
+        Map<String, JSONObject> expectedAttributes = mStructParser.getCurrentAttributes();
+
+        for (JSONObject expectedAttribute: expectedAttributes.values()) {
+            final var expectedAttributeKey = (String)expectedAttribute.get("key");
+            if (expectedAttributeKey == null || expectedAttributeKey.equals("")) {
+                throw new ParseException(0, "JSON node attribute has no key");
+            }
+
+            final var expectedAttributeValue = (String)expectedAttribute.get("value");
+            if (expectedAttributeValue == null || expectedAttributeValue.equals("")) {
+                throw new ParseException(0, "JSON node attribute has no value");
+            }
+
+            final String elementAttributeValue = element.getAttribute(expectedAttributeKey);
+            if (elementAttributeValue == null || elementAttributeValue.equals("")) {
+                throw new ParseException(0, "DOM node attribute has no value");
+            }
+
+            if (expectedAttributeValue.charAt(0) == '$') {
+                // Store the DOM attribute value with the key: `<elementPath> + "/" +
+                // <JSON attribute value without "$">`
+                final String storingKey = expectedAttributeValue.substring(1);
+                mResults.put(elementPath + "/" + storingKey, elementAttributeValue);
+            } else {
+                // Check if (<DOM attribute value> == <JSON attribute value>)
+
+                if (!expectedAttributeValue.equals(elementAttributeValue)) {
+                    throw new ParseException(0, "JSON and DOM nodes have different attribute values");
+                }
+            }
+        }
+
+        // Store the element value
+        final String expectedValue = mStructParser.getCurrentValue();
+        if (!expectedValue.equals("") && expectedValue.charAt(0) == '$') {
+            // Store the DOM value with the key: `<elementPath> + "/" + <JSON value without "$">`
+            final String storingKey = expectedValue.substring(1);
+            final String elementValue = element.getText();
+
+            mResults.put(elementPath + "/" + storingKey,
+                (elementValue != null) ?
+                    elementValue : ""
+            );
+        }
+
+        MyLogger.log(Level.FINER, "Current result: \n" + getResultDigest());
+    }
+
+    private void walkChildren(WebElement element, String path, int elementIndex) throws ParseException {
+        // Depth-first search for the children
+
+        final int jSONNodeChildrenNumber = mStructParser.childrenNumber();
+
+        if (jSONNodeChildrenNumber == 0) {
+            // If no child in the JSON struct, don't parse the DOM children
+            return;
+        }
+
+        final List<WebElement> dOMNodeChildren = element.findElements(By.xpath("./child::*"));
+        final int dOMNodeChildrenNumber = dOMNodeChildren.size();
+
+        // Possibly update the path for multiple elements
+        final String elementPath = mStructParser.isCurrentMultiple() ?
+            (path + "/" + elementIndex) : path;
+
+        // Check if: (jSONNodeChildrenNumber <= dOMNodeChildrenNumber)
+        if (jSONNodeChildrenNumber > dOMNodeChildrenNumber) {
+            throw new ParseException(0, "JSON node cannot have more children than the related DOM node");
+        }
+
+        int jSONNodeChildIndex = 0, dOMNodeChildIndex = 0;
+        JSONResultStructParser.State parentState = mStructParser.saveState();
+        mStructParser.goToChild(0);
+
+        while (dOMNodeChildIndex < dOMNodeChildrenNumber) {
+            // 1 loop iteration compares a pair: (JSON node, DOM node).
+            //
+            // The following rules must be verified:
+            // - If the current JSON node is multiple, it must be matched with 1..N DOM nodes, before
+            // switching to the next JSON node.
+            // - If the current JSON node is not multiple, it must be matched with 1 DOM node, before
+            // switching to the next JSON node.
+
+            WebElement dOMNodeChild = dOMNodeChildren.get(dOMNodeChildIndex);
+
+            final boolean jSONNodeMatchedBeforeIteration = mStructParser.wasCurrentMatched();
+
+            if (!mStructParser.isCurrentlyMatching(dOMNodeChild)) {
+                if (!jSONNodeMatchedBeforeIteration) {
+                    throw new ParseException(0, "The following JSON node didn't match at least once: "
+                        + mStructParser.getCurrentInfo());
+                }
+
+                if (jSONNodeChildIndex == jSONNodeChildrenNumber - 1) {
+                    MyLogger.log(Level.WARNING, "No more JSON node available to match the remaining DOM "
+                        + "children nodes. Stop parsing them.");
+                    break;
+                }
+
+                mStructParser.restoreState(parentState);
+                mStructParser.goToChild(++jSONNodeChildIndex);
+
+                continue;
+            }
+
+            if (jSONNodeMatchedBeforeIteration && !mStructParser.isCurrentMultiple()) {
+                throw new ParseException(0, "JSON node matched more than once but is not multiple");
+            }
+
+            JSONResultStructParser.State childState = mStructParser.saveState();
+            parse(dOMNodeChild, elementPath + "/" + mStructParser.getCurrentTag(), dOMNodeChildIndex);
+            mStructParser.restoreState(childState);
+
+            dOMNodeChildIndex++;
         }
     }
 

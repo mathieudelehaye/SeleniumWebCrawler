@@ -44,6 +44,12 @@ public class JSONResultStructParser extends JSONParser {
             return super.clone();
         }
 
+        public void update(State state) {
+            mRoot = (JSONObject) state.mRoot.clone();
+            mCurrent = (JSONObject) state.mCurrent.clone();
+            mCurrentMatched = state.mCurrentMatched;
+        }
+
         // TODO: implement getters-setters and make the properties private
     }
 
@@ -95,7 +101,10 @@ public class JSONResultStructParser extends JSONParser {
     }
 
     public void restoreState(State state) {
-        mState = state;
+        mState.update(state);
+
+        // We need to clear the cache, otherwise we use the cached data before the restore
+        mCache.reset();
     }
 
     public int childrenNumber() {
@@ -172,8 +181,12 @@ public class JSONResultStructParser extends JSONParser {
                 + pe.getMessage());
         }
 
-        mState.mCurrentMatched = res;
-        return mState.mCurrentMatched;
+        // Only update `mCurrentMatched` if matching
+        if (res) {
+            mState.mCurrentMatched = true;
+        }
+
+        return res;
     }
 
     public boolean wasCurrentMatched() {
