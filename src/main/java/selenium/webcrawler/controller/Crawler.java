@@ -22,6 +22,7 @@
 package selenium.webcrawler.controller;
 
 import java.io.FileReader;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
@@ -31,6 +32,7 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import selenium.webcrawler.model.CrawlResult.ResultParser;
+import selenium.webcrawler.model.DB.CrawledResultInfosDBEntry;
 import selenium.webcrawler.model.DB.SearchResult;
 import selenium.webcrawler.model.JSON.JSONResultStructParser;
 import selenium.webcrawler.templates.Helpers;
@@ -146,6 +148,24 @@ public class Crawler {
     }
 
     private void writeStructuredDataToDatabase() {
-//
+        for(String resultKey : mStructuredResults.keySet()) {
+
+            CrawledResultInfosDBEntry entry = null;
+
+            try {
+                 entry = new CrawledResultInfosDBEntry(
+                    "crawledRPInfos-Manchester",
+                    resultKey + (new Date()).getTime(),
+                    mStructuredResults.get(resultKey)
+                );
+            } catch(Exception e) {
+                MyLogger.log(Level.WARNING, "Error while creating a DB entry for result with key "
+                    + resultKey + ": " + e.getMessage());
+            }
+
+            if (entry != null) {
+                entry.createFields();
+            }
+        }
     }
 }
