@@ -21,50 +21,62 @@
 
 package selenium.webcrawler.model.DB;
 
+import java.util.HashMap;
+
 public class SearchResult {
-    private int mId;
+    private String mId;
     private String mName;
-    private String[] mAddressLines;
-    private String[] mCityLines;
+    private HashMap<String, String> mAddressLines = new HashMap<>();
+    private HashMap<String, String> mCityLines = new HashMap<>();
 
-    public int getId() {
+    public String getId() {
         return mId;
-    }
-
-    public void setId(int value) {
-        mId = value;
     }
 
     public String getName() {
         return mName;
     }
 
-    public void setName(String value) {
-        mName = value;
-    }
-
     public String[] getAddressLines() {
-        return mAddressLines;
-    }
-
-    public void setAddressLines(String[] value) {
-        mAddressLines = value;
+        return mAddressLines.values().toArray(new String[0]);
     }
 
     public String[] getCityLines() {
-        return mCityLines;
+        return mCityLines.values().toArray(new String[0]);
     }
 
-    public void setCityLines(String[] value) {
-        mCityLines = value;
+    public void setField(String name, String value, String line) throws Exception {
+        switch (name) {
+            case "point_id":
+                mId = value;
+                break;
+            case "point_name":
+            default:
+                mName = value;
+                break;
+            case "point_address":
+                if (line == null || line.equals("")) {
+                    throw new Exception("Setting address line without providing a line number");
+                }
+
+                mAddressLines.put(line, value);
+                break;
+            case "point_city":
+                if (line == null || line.equals("")) {
+                    throw new Exception("Setting city line without providing a line number");
+                }
+
+                mCityLines.put(line, value);
+                break;
+        }
     }
 
     public SearchResult() {
-        mId = 0;
-        mName = new String("");
+        mId = "";
+        mName = "";
     }
 
-    public SearchResult(int id, String name, String[] addressLines, String[] cityLines) {
+    public SearchResult(String id, String name, HashMap<String, String> addressLines, HashMap<String, String> cityLines) {
         mId = id;
         mName = name;
         mAddressLines = addressLines;

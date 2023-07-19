@@ -23,6 +23,10 @@ package selenium.webcrawler.controller;
 
 public class Main {
     public static void main(String[] args) throws Exception {
-        (new Crawler()).run();
+        final var crawler = new Crawler();
+
+        crawler.run();
+
+        crawler.store();
     }
 }

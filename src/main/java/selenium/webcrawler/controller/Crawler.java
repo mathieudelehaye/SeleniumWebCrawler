@@ -21,19 +21,25 @@
 
 package selenium.webcrawler.controller;
 
+import java.io.FileReader;
+import java.util.HashMap;
+import java.util.logging.Level;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import selenium.webcrawler.model.CrawlResult.ResultParser;
+import selenium.webcrawler.model.DB.SearchResult;
 import selenium.webcrawler.model.JSON.JSONResultStructParser;
 import selenium.webcrawler.templates.Helpers;
 import selenium.webcrawler.templates.MyLogger;
-import java.io.FileReader;
-import java.util.logging.Level;
 
 public class Crawler {
     final private static int mPauseTimeInSec = 5;
+    private HashMap<String, String> mOutput;
+    private final HashMap<String, SearchResult> mStructuredResults = new HashMap<>();
 
     public void run() throws Exception {
         // Optional. If not specified, ResultParserTest searches the PATH for
@@ -71,8 +77,75 @@ public class Crawler {
         var jsonParser = new JSONResultStructParser();
         jsonParser.init(reader);
 
-        new ResultParser(driver, jsonParser);
+        final var parser = new ResultParser(driver, jsonParser);
+
+        mOutput = parser.read();
 
         driver.quit();
+    }
+
+    public void store() {
+        if (mOutput == null) {
+            MyLogger.log(Level.WARNING, "Crawler not run: no data to store");
+            return;
+        }
+
+        structureData();
+
+        writeStructuredDataToDatabase();
+    }
+
+    private void structureData() {
+        final Pattern resultKeyPattern = Pattern.compile(".*\\/li\\/([0-9]+).*");
+        final Pattern resultMultiLineFieldPattern = Pattern.compile(".*\\/([0-9]+)\\/([a-z_]+)");
+        final Pattern resultSingleLineFieldPattern = Pattern.compile(".*\\/([a-z_]+)");
+
+        for (String key : mOutput.keySet()) {
+            final Matcher resultKeyMatcher = resultKeyPattern.matcher(key);
+            if(!resultKeyMatcher.matches()) {
+                continue;
+            }
+            final String id = resultKeyMatcher.group(1);
+
+            // Create map entry if not yet done
+            SearchResult result = mStructuredResults.get(id);
+            if (result == null) {
+                result = new SearchResult();
+                mStructuredResults.put(id, result);
+            }
+
+            // Parse the field
+
+            // Multi-line
+            final Matcher resultMultiLineFieldMatcher = resultMultiLineFieldPattern.matcher(key);
+            if (resultMultiLineFieldMatcher.matches()) {
+                final String fieldName = resultMultiLineFieldMatcher.group(2);
+                final String fieldLine = resultMultiLineFieldMatcher.group(1);
+
+                try {
+                    result.setField(fieldName, mOutput.get(key), fieldLine);
+                } catch (Exception e) {
+                    MyLogger.log(Level.WARNING, "Error while writing as a structured result the crawler output with key " + key + ": " + e.getMessage());
+                }
+
+                continue;
+            }
+
+            // Single line
+            final Matcher resultSingleLineFieldMatcher = resultSingleLineFieldPattern.matcher(key);
+            if (resultSingleLineFieldMatcher.matches()) {
+                final String fieldName = resultSingleLineFieldMatcher.group(1);
+
+                try {
+                    result.setField(fieldName, mOutput.get(key), "");
+                } catch (Exception e) {
+                    MyLogger.log(Level.WARNING, "Error while writing as a structured result the crawler output with key " + key + ": " + e.getMessage());
+                }
+            }
+        }
+    }
+
+    private void writeStructuredDataToDatabase() {
+//
     }
 }

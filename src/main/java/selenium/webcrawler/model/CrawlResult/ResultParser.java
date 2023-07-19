@@ -63,6 +63,10 @@ public class ResultParser {
         }
     }
 
+    public HashMap<String, String> read() {
+        return mResults;
+    }
+
     private void parse(WebElement element, String path, int elementIndex) throws ParseException {
         MyLogger.log(Level.FINER, "Parsing: " + path);
 

@@ -75,12 +75,12 @@ public class CrawledResultInfosDBEntry {
 
         final int addressLineCount = mEntry.getAddressLines().length;
         for (int i = 0; i < addressLineCount; i++) {
-            entryData.put("AddressLine0" + i, mEntry.getAddressLines()[i]);
+            entryData.put("Address" + i, mEntry.getAddressLines()[i]);
         }
 
         final int citLineCount = mEntry.getCityLines().length;
         for (int i = 0; i < citLineCount; i++) {
-            entryData.put("CityLine0" + i, mEntry.getCityLines()[i]);
+            entryData.put("City" + i, mEntry.getCityLines()[i]);
         }
 
         ApiFuture<WriteResult> future = mDatabase.collection("crawledRPInfos-Edinburgh")
