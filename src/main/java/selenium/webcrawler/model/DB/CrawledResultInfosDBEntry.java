@@ -1,5 +1,5 @@
 //
-//  CrawledRPInfosDBEntry.java
+//  CrawledResultInfosDBEntry.java
 //
 //  Created by Mathieu Delehaye on 15/03/2023.
 //
@@ -19,7 +19,7 @@
 //  You should have received a copy of the GNU Affero General Public License along with this program. If not, see
 //  <https://www.gnu.org/licenses/>.
 
-package org.openqa.selenium.webcrawler.model;
+package selenium.webcrawler.model.DB;
 
 import com.google.api.core.ApiFuture;
 import com.google.auth.oauth2.GoogleCredentials;
@@ -27,24 +27,29 @@ import com.google.cloud.firestore.Firestore;
 import com.google.cloud.firestore.FirestoreOptions;
 import com.google.cloud.firestore.WriteResult;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
-public class CrawledRPInfosDBEntry {
-    private SearchResult mEntry;
-    private String mEntryKey;
+public class CrawledResultInfosDBEntry {
     private Firestore mDatabase;
+    private String mCollectionName;
+    private String mEntryKey;
+    private SearchResult mEntry;
 
-    public CrawledRPInfosDBEntry(String keySeed, SearchResult data) throws IOException {
+    public CrawledResultInfosDBEntry(String collection, String keySeed, SearchResult data) throws Exception {
 
         final String DBName = "beautyorder-fa43e";
 
+        if (collection == null || collection.equals("")) {
+            throw new Exception("Tried to create a DB entry without providing a collection name");
+        }
+
+        mCollectionName = collection;
+
         // Generate a random entry key from the provided seed
         byte[] hash;
-        StringBuilder uid = new StringBuilder();
 
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-1");
@@ -75,20 +80,21 @@ public class CrawledRPInfosDBEntry {
 
         final int addressLineCount = mEntry.getAddressLines().length;
         for (int i = 0; i < addressLineCount; i++) {
-            entryData.put("AddressLine0" + i, mEntry.getAddressLines()[i]);
+            entryData.put("Address" + i, mEntry.getAddressLines()[i]);
         }
 
         final int citLineCount = mEntry.getCityLines().length;
         for (int i = 0; i < citLineCount; i++) {
-            entryData.put("CityLine0" + i, mEntry.getCityLines()[i]);
+            entryData.put("City" + i, mEntry.getCityLines()[i]);
         }
 
-        ApiFuture<WriteResult> future = mDatabase.collection("crawledRPInfos-Edinburgh")
+        ApiFuture<WriteResult> future = mDatabase.collection(mCollectionName)
             .document(mEntryKey).set(entryData);
 
         try {
-            System.out.println("New info successfully written to the database for entry: " + mEntryKey
-                + ". Update time : " + future.get().getUpdateTime());
+            System.out.println("New info successfully written to the collection " + mCollectionName +
+                " of database for entry: " + mEntryKey +
+                ". Update time : " + future.get().getUpdateTime());
         } catch (Exception e) {
             System.out.println("Error writing user info to the database: " + e);
         }

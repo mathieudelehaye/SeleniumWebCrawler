@@ -19,9 +19,14 @@
 //  You should have received a copy of the GNU Affero General Public License along with this program. If not, see
 //  <https://www.gnu.org/licenses/>.
 
-package org.openqa.selenium.webcrawler.controller;
+package selenium.webcrawler.controller;
 
 public class Main {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
+        final var crawler = new Crawler();
+
+        crawler.run();
+
+        crawler.store();
     }
 }

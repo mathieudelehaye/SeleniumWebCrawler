@@ -1,0 +1,68 @@
+{
+  "tag": "div",
+  "attributes": [
+    {
+      "key": "id",
+      "value": "div-id-01"
+    }
+  ],
+  "children": [
+    {
+      "tag": "ul",
+      "attributes": [
+        {
+          "key": "foo",
+          "value": "unordered-list-bar"
+        }
+      ],
+      "children": [
+        {
+          "tag": "li",
+          "attributes": [
+            {
+              "key": "list-item-id",
+              "value": "$list_item_id"
+            },
+            {
+              "key": "list-item-date",
+              "value": "$list_item_date"
+            }
+          ],
+          "children": [
+            {
+              "tag": "p",
+              "children": [
+                {
+                  "tag": "strong",
+                  "value": "$content_title",
+                  "isMultiple": true
+                },
+                {
+                  "tag": "span",
+                  "attributes": [
+                    {
+                      "key": "class",
+                      "value": "span-class-01"
+                    }
+                  ],
+                  "value": "$content_description"
+                },
+                {
+                  "tag": "span",
+                  "value": {
+                    "regex": " (-?[0-9]+\\.[0-9]+),(-?[0-9]+\\.[0-9]+) – -?[0-9]+.[0-9]+,-?[0-9]+.[0-9]+",
+                    "variables": [
+                      {
+                        "name": "latitude"
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
