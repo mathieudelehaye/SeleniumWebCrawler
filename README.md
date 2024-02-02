@@ -1,3 +1,3 @@
 # SeleniumWebCrawler
 
-Automatically browse a website with Selenium WebDriver and extract data to a DB.
+A tool to automatically crawl a website with Selenium WebDriver and extract data to a Firebase DB.
