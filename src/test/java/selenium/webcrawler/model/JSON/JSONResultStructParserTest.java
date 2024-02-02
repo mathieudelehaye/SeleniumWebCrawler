@@ -39,7 +39,7 @@ public class JSONResultStructParserTest {
         // Optional. If not specified, JSONResultStructParser searches the PATH for
         // chromedriver.
         System.setProperty("webdriver.chrome.driver",
-            "/Volumes/portable-ssd/Web_Development/_J/chromedriver_mac64/chromedriver");
+        "/Volumes/portable-ssd/Web_Development/_J/chromedriver-mac-x64/chromedriver");
 
         MyLogger.setLevel(Level.FINER);
     }
